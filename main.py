@@ -1,16 +1,15 @@
 ROOMSIZE = 21 # (x,y)
 
-H_WALL = "══" # Basic tile-grafik inläst som konstanter
+H_WALL = "═" # Basic tile-grafik inläst som konstanter
 V_WALL = "║"
 TL_CORNER = "╔"
 TR_CORNER = "╗"
 BL_CORNER = "╚"
 BR_CORNER = "╝"
-HALFEMPTY = " "
-EMPTY = "  "
+EMPTY = " "
 
-T_DOOR  = BR_CORNER+2*EMPTY+BL_CORNER
-B_DOOR  = TR_CORNER+2*EMPTY+TL_CORNER
+T_DOOR  = BR_CORNER+EMPTY+BL_CORNER
+B_DOOR  = TR_CORNER+EMPTY+TL_CORNER
 TB_NODOOR = H_WALL*3
 
 def generate_room(doors):
@@ -47,12 +46,12 @@ def generate_room(doors):
                 horizLine+=V_WALL
         elif vertLine == int(((ROOMSIZE-1)/2)-1):
             if doors['L']:
-                horizLine+=HALFEMPTY
+                horizLine+=EMPTY
             else:
                 horizLine+=V_WALL
             horizLine+=EMPTY*(ROOMSIZE-2)
             if doors['R']:
-                horizLine+=HALFEMPTY
+                horizLine+=EMPTY
             else:
                 horizLine+=V_WALL
         elif vertLine == int(((ROOMSIZE-1)/2)):
