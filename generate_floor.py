@@ -1,5 +1,5 @@
 from random import randint
-import keyboard
+#import keyboard
 SIDELENGTH = 15 # Kvadratiskt rum med sidlängd SIDELENGTH
 MIDDLE = int(SIDELENGTH/2)
 GRAPHICS={  'PLAYER':'@',
@@ -33,6 +33,27 @@ def generate_room(coords): #returnerar ett dictionary som sparar data kring rumm
     room = {"tiles": tiles, "coordinates": coords, "doors": {"T": False, "B": False, "L": False, "R": False}} #dörrarna är (up down left right)
     return room
 
+def needed_doors(room, possibilities): #Sidoeffekt: Ändrar nycklarnas booelska värden i doors-ordboken så att man vet vilka håll som rummen behöver ha dörrar till
+    roomCoords = room['coordinates']
+    x = roomCoords[0]
+    y = roomCoords[1]
+    neighbouringRooms = []
+    for coords in possible_placements(roomCoords):
+        neighbouringRooms.append(coords)
+    for coords in neighbouringRooms:
+        if not coords in possibilities:
+            neighbouringRooms.remove(coords)
+        if coords == (x-1,y):
+            room['doors']['L'] = True
+        elif coords == (x+1,y):
+            room['doors']['R'] = True
+        elif coords == (x,y-1):
+            room['doors']['B'] = True
+        elif coords == (x,y+1):
+            room['doors']['T'] = True
+            
+                
+
 def create_doors(room):
     tiles = room['tiles']
     if room['doors']['L'] == True:
@@ -40,13 +61,13 @@ def create_doors(room):
             tiles[int((SIDELENGTH-3)/2) + i][0] = GRAPHICS['EMPTY']
     if room['doors']['R'] == True:
         for i in range(3):
-            tiles[int((SIDELENGTH-3)/2) + i][SIDELENGHT] = GRAPHICS['EMPTY']
+            tiles[int((SIDELENGTH-3)/2) + i][SIDELENGTH-1] = GRAPHICS['EMPTY']
     if room['doors']['T'] == True:
         for i in range(3):
             tiles[0][int((SIDELENGTH-3)/2) + i] = GRAPHICS['EMPTY']
     if room['doors']['B'] == True:
         for i in range(3):
-            tiles[SIDELENGTH][int((SIDELENGTH-3)/2) + i] = GRAPHICS['EMPTY']
+            tiles[SIDELENGTH-1][int((SIDELENGTH-3)/2) + i] = GRAPHICS['EMPTY']
         
 
 #printar rummet, returnerar även koordinaterna för rummet
@@ -84,6 +105,10 @@ def generate_floor(level):
             if coords not in possibilities:
                 possibilities.append(coords)
         possibilities.pop(possibilities.index(newRoomCoords))
+    for room in floor:
+        needed_doors(room, possibilities)
+        create_doors(room)
+    
     return floor
 
 #Här under finns en del funktioner som interagerar med tiles i rum
@@ -164,10 +189,8 @@ def testing_create_doors(door):
     testroom['doors'][door] = True
     create_doors(testroom)
     render_room(testroom)
- 
-testing_create_doors('T')
-testing_create_doors('L')
- 
-#generate_floor(1)
+
+
+generate_floor(1)
 #place_entity(GRAPHICS['PLAYER'], floor[0], (MIDDLE,MIDDLE))
 #playerTurn(floor[0])
