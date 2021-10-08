@@ -2,7 +2,7 @@ from random import randint
 import keyboard
 SIDELENGTH = 15 # Kvadratiskt rum med sidlängd SIDELENGTH
 MIDDLE = int(SIDELENGTH/2)
-GRAPHICS={'PLAYER':'@',
+GRAPHICS={  'PLAYER':'@',
             'TL_WALL':'╔', #TL står för top-left
             'TR_WALL':'╗', #TR står för top-right
             'BL_WALL':'╚', #BL står för bottom-left
@@ -17,9 +17,7 @@ GRAPHICS={'PLAYER':'@',
             'HP_POT':'H',
             'POWERUP':'P',}
 
-
-doorLocations = {'T':True,'L':True,'R':False,'B':False}
-def generate_room(coords, doorLocations): #returnerar ett dictionary som sparar data kring rummet. Bl.a tiles, koordinater och om dörrar finns eller inte.
+def generate_room(coords): #returnerar ett dictionary som sparar data kring rummet. Bl.a tiles, koordinater och om dörrar finns eller inte.
     tiles = []
     for horizLine in range(SIDELENGTH):
         vertLine = []
@@ -56,7 +54,7 @@ def possible_placements(roomCoords):
 #problem med funktionen: det blir en enda stor klump av alla rum. Om man inte vill ha det så, hur gör man?
 def generate_floor(level):
     #skapar första rummet vid 0,0
-    floor = [generate_room((0,0),doorLocations)]
+    floor = [generate_room((0,0), )]
     possibilities = [] #lista som lagrar alla möjliga koordinater där nästa rum kan placeras 
     for coords in possible_placements((0,0)):
         possibilities.append(coords)
@@ -65,7 +63,7 @@ def generate_floor(level):
         rng = randint(0, len(possibilities)-1)
         newRoomCoords = possibilities[rng]
         print(f"Rum {_} koordinater: ", newRoomCoords) #rad för debug
-        floor.append(generate_room(newRoomCoords,doorLocations))
+        floor.append(generate_room(newRoomCoords, ))
         for coords in possible_placements(newRoomCoords):
             if coords not in possibilities:
                 possibilities.append(coords)
@@ -80,7 +78,6 @@ def place_entity(entity, room, tilecoords):
     y = tilecoords[1]
     tiles = room['tiles']
     yaxis = tiles[x]
-    print(y)
     yaxis[y] = entity
     
 def delete_entity(room, coords):
@@ -106,14 +103,14 @@ def what_entity(room, tilecoords):
 
 #OBS! Denna funktion är inte ännu anpassad för att hitta flera entiteter.
 #Returnerar koordinaterna för en entiet av en viss typ i ett rum
-def find_entity(entitytype, room):
+def find_entity(entityType, room):
     tiles = room['tiles']
-    x = 0
-    for yaxis in tiles:
-        if entitytype in yaxis:
-            return (x, yaxis.index(entitytype))
+    y = 0
+    for xAxis in tiles:
+        if entityType in xAxis:
+            return (y, xAxis.index(entityType))
         else:
-            x += 1
+            y += 1
         
 #Returnerar ett rum med bestämda koordinater från ett bestämt floor 
 def find_room_by_coord(floor, roomcoords):
