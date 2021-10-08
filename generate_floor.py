@@ -30,8 +30,24 @@ def generate_room(coords): #returnerar ett dictionary som sparar data kring rumm
                 vertLine.append(GRAPHICS['EMPTY'])
             vertLine.append(GRAPHICS['TEMP_WALL'])
         tiles.append(vertLine)
-    room = {"tiles": tiles, "coordinates": coords}
+    room = {"tiles": tiles, "coordinates": coords, "doors": {"T": False, "B": False, "L": False, "R": False}} #dörrarna är (up down left right)
     return room
+
+def create_doors(room):
+    tiles = room['tiles']
+    if room['doors']['L'] == True:
+        for i in range(3):
+            tiles[int((SIDELENGTH-3)/2) + i][0] = GRAPHICS['EMPTY']
+    if room['doors']['R'] == True:
+        for i in range(3):
+            tiles[int((SIDELENGTH-3)/2) + i][SIDELENGHT] = GRAPHICS['EMPTY']
+    if room['doors']['T'] == True:
+        for i in range(3):
+            tiles[0][int((SIDELENGTH-3)/2) + i] = GRAPHICS['EMPTY']
+    if room['doors']['B'] == True:
+        for i in range(3):
+            tiles[SIDELENGTH][int((SIDELENGTH-3)/2) + i] = GRAPHICS['EMPTY']
+        
 
 #printar rummet, returnerar även koordinaterna för rummet
 def render_room(room):
@@ -113,12 +129,11 @@ def find_entity(entityType, room):
             y += 1
         
 #Returnerar ett rum med bestämda koordinater från ett bestämt floor 
-def find_room_by_coord(floor, roomcoords):
+def find_room_by_coord(floor, roomCoords):
     for room in floor:
-        if room['coordinates']==roomcoords:
+        if room['coordinates']==roomCoords:
             return room['tiles']
 
-floor = generate_floor(1)
 def playerTurn(room):
     currentRoom = render_room(room)
     while True:
@@ -141,7 +156,18 @@ def playerTurn(room):
         if keyboard.is_pressed('e'): #wait
             None
     render_room(room)
-            
-generate_floor(1)
-place_entity(GRAPHICS['PLAYER'], floor[0], (MIDDLE,MIDDLE))
-playerTurn(floor[0])
+
+
+def testing_create_doors(door):
+    testroom = generate_room((0,0))
+    render_room(testroom)
+    testroom['doors'][door] = True
+    create_doors(testroom)
+    render_room(testroom)
+ 
+testing_create_doors('T')
+testing_create_doors('L')
+ 
+#generate_floor(1)
+#place_entity(GRAPHICS['PLAYER'], floor[0], (MIDDLE,MIDDLE))
+#playerTurn(floor[0])
