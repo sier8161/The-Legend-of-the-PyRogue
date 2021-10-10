@@ -1,5 +1,5 @@
 from random import randint
-#import keyboard
+import keyboard
 SIDELENGTH = 15 # Kvadratiskt rum med sidlängd SIDELENGTH
 MIDDLE = int(SIDELENGTH/2)
 GRAPHICS={  'PLAYER':'@',
@@ -16,6 +16,7 @@ GRAPHICS={  'PLAYER':'@',
             'ENEMY_3':'3',
             'HP_POT':'H',
             'POWERUP':'P',}
+
 
 def generate_room(coords): #returnerar ett dictionary som sparar data kring rummet. Bl.a tiles, koordinater och om dörrar finns eller inte.
     tiles = []
@@ -108,7 +109,7 @@ def generate_floor(level):
     for room in floor:
         needed_doors(room, possibilities)
         create_doors(room)
-    
+    place_entity(GRAPHICS['PLAYER'], floor[0], (MIDDLE, MIDDLE))
     return floor
 
 #Här under finns en del funktioner som interagerar med tiles i rum
@@ -161,27 +162,38 @@ def find_room_by_coord(floor, roomCoords):
 
 def playerTurn(room):
     currentRoom = render_room(room)
+    #CONTROLS = {'w': (playerCoords[0]-1, playerCoords[1]),
+     #           'a': (playerCoords[0], playerCoords[1]-1),
+      #          's': (playerCoords[0]+1, playerCoords[1])
+       #         'd': (playerCoords[0], playerCoords[1]+1)}
     while True:
-        playerCoords = find_entity(GRAPHICS['PLAYER'], room)
-        #För nuvarande så är movement inte fixat.
-        if keyboard.is_pressed('w'): # move up
-            moveto = (playerCoords[0]-1, playerCoords[1])
-            move_entity(room, playerCoords, moveto)
-        if keyboard.is_pressed('a'): # move left
-            moveto = (playerCoords[0], playerCoords[1]-1)
-            move_entity(room, playerCoords, moveto)
-        if keyboard.is_pressed('s'): # move down
-            moveto = (playerCoords[0]+1, playerCoords[1])
-            move_entity(room, playerCoords, moveto)
-        if keyboard.is_pressed('d'):# move right
-            moveto = (playerCoords[0], playerCoords[1]+1)
-            move_entity(room, playerCoords, moveto)
-        if keyboard.is_pressed('q'): #attack
-            move_entity(room, playerCoords, moveto)
-        if keyboard.is_pressed('e'): #wait
-            None
-    render_room(room)
-
+        playersTurn = True
+        while playersTurn == True:
+            playerCoords = find_entity(GRAPHICS['PLAYER'], room)
+            #Finns nog ett mycket snyggare sätt att göra detta på,men det funkar så länge. Tänker att man kan använda ett  dictionary och ha t.ex. wasd som nycklar och moveto som par till dem
+            if keyboard.is_pressed('w'): # move up
+                moveto = (playerCoords[0]-1, playerCoords[1])
+                move_entity(room, playerCoords, moveto)
+                playersTurn = False
+            if keyboard.is_pressed('a'): # move left
+                moveto = (playerCoords[0], playerCoords[1]-1)
+                move_entity(room, playerCoords, moveto)
+                playersTurn = False
+            if keyboard.is_pressed('s'): # move down
+                moveto = (playerCoords[0]+1, playerCoords[1])
+                move_entity(room, playerCoords, moveto)
+                playersTurn = False
+            if keyboard.is_pressed('d'):# move right
+                moveto = (playerCoords[0], playerCoords[1]+1)
+                move_entity(room, playerCoords, moveto)
+                playersTurn = False
+            if keyboard.is_pressed('q'): #attack
+                move_entity(room, playerCoords, moveto)
+                playersTurn = False
+            if keyboard.is_pressed('e'): #wait
+                None
+                playersTurn = False
+        render_room(room)
 
 def testing_create_doors(door):
     testroom = generate_room((0,0))
@@ -189,8 +201,9 @@ def testing_create_doors(door):
     testroom['doors'][door] = True
     create_doors(testroom)
     render_room(testroom)
+    
 
+def testing_movement():
+    floor = generate_floor(1)
+    playerTurn(floor[0])
 
-generate_floor(1)
-#place_entity(GRAPHICS['PLAYER'], floor[0], (MIDDLE,MIDDLE))
-#playerTurn(floor[0])
