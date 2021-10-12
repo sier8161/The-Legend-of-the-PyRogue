@@ -4,21 +4,31 @@ import os
 SIDELENGTH = 15 # Kvadratiskt rum med sidlängd SIDELENGTH
 MIDDLE = int(SIDELENGTH/2)
 GRAPHICS={  'PLAYER':'@',
+            'PLAYER_DAMAGED':'a',
             'TL_WALL':'╔', #TL står för top-left
             'TR_WALL':'╗', #TR står för top-right
             'BL_WALL':'╚', #BL står för bottom-left
             'BR_WALL':'╝', #BR står för bottom-right
-            'V_WALL':'║',
-            'H_WALL':'═',
-            'TEMP_WALL':'#',
+            'V_WALL':'║',  #V står för vertical
+            'H_WALL':'═',  #H står för horizontal
+            'TEMP_WALL':'#',#Temporär tile för att rendera alla väggar
             'EMPTY':' ',
+            'NEXT_FLOOR':'x',
             'ENEMY_1':'1',
             'ENEMY_2':'2',
             'ENEMY_3':'3',
-            'HP_POT':'H',
-            'POWERUP':'P',}
+            'ENEMY_SLEEPING':'Z',
+            'SHIELD':'H'}
 
-clear_console = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear')
+#ENEMIES = {0:{'enemyType':'ENEMY_1','pos':(randomX,randomY),'room':rum,'status':isSleeping}
+#           1:{'enemyType':'ENEMY_1','pos':(randomX,randomY),'room':rum,'status':isSleeping}
+#           2:{'enemyType':'ENEMY_1','pos':(randomX,randomY),'room':rum,'status':isSleeping}
+#           3:{'enemyType':'ENEMY_1','pos':(randomX,randomY),'room':rum,'status':isSleeping}
+#           4:{'enemyType':'ENEMY_1','pos':(randomX,randomY),'room':rum,'status':isSleeping}}
+
+#PLAYER = {'pos':(startX,startY),'room':rum,'status':isDamagedOrDead}
+
+clear_console = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear') #för körning i kommandotolk
 
 def generate_room(coords): #returnerar ett dictionary som sparar data kring rummet. Bl.a tiles, koordinater och om dörrar finns eller inte.
     tiles = []
@@ -36,7 +46,7 @@ def generate_room(coords): #returnerar ett dictionary som sparar data kring rumm
     room = {"tiles": tiles, "coordinates": coords, "doors": {"T": False, "B": False, "L": False, "R": False}} #dörrarna är (up down left right)
     return room
 
-def needed_doors(room, possibilities): #Sidoeffekt: Ändrar nycklarnas booelska värden i doors-ordboken så att man vet vilka håll som rummen behöver ha dörrar till
+def needed_doors(room, possibilities): #Sidoeffekt: Ändrar nycklarnas boolska värden i doors-ordboken så att man vet vilka håll som rummen behöver ha dörrar till
     roomCoords = room['coordinates']
     x = roomCoords[0]
     y = roomCoords[1]
@@ -209,3 +219,5 @@ def testing_create_doors(door):
 def testing_movement():
     floor = generate_floor(1)
     playerTurn(floor[0])
+
+testing_movement()
