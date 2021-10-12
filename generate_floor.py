@@ -18,7 +18,8 @@ GRAPHICS={  'PLAYER':'@',
             'ENEMY_2':'2',
             'ENEMY_3':'3',
             'ENEMY_SLEEPING':'Z',
-            'SHIELD':'H'}
+            'SHIELD':'H',
+            'PIROGUE':'B'}
 
 #ENEMIES = {0:{'enemyType':'ENEMY_1','pos':(randomX,randomY),'room':rum,'status':isSleeping}
 #           1:{'enemyType':'ENEMY_1','pos':(randomX,randomY),'room':rum,'status':isSleeping}
