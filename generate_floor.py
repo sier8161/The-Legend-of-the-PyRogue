@@ -1,5 +1,6 @@
 from random import randint
 import keyboard
+import os
 SIDELENGTH = 15 # Kvadratiskt rum med sidlängd SIDELENGTH
 MIDDLE = int(SIDELENGTH/2)
 GRAPHICS={  'PLAYER':'@',
@@ -17,6 +18,7 @@ GRAPHICS={  'PLAYER':'@',
             'HP_POT':'H',
             'POWERUP':'P',}
 
+clear_console = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear')
 
 def generate_room(coords): #returnerar ett dictionary som sparar data kring rummet. Bl.a tiles, koordinater och om dörrar finns eller inte.
     tiles = []
@@ -73,6 +75,7 @@ def create_doors(room):
 
 #printar rummet, returnerar även koordinaterna för rummet
 def render_room(room):
+    clear_console()
     tiles = room['tiles']
     for vertLine in tiles:
         for tile in vertLine:
@@ -206,4 +209,3 @@ def testing_create_doors(door):
 def testing_movement():
     floor = generate_floor(1)
     playerTurn(floor[0])
-
