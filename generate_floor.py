@@ -1,5 +1,9 @@
 from random import randint
 import keyboard
+import os
+
+clear_console = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear') #för körning i kommandotolk
+
 SIDELENGTH = 15 # Kvadratiskt rum med sidlängd SIDELENGTH
 MIDDLE = int(SIDELENGTH/2)
 GRAPHICS={  'PLAYER':'@',
@@ -187,7 +191,7 @@ def entity_action(floor, entity, moveTo): #Anropas när spelaren trycker på WAS
         ENTITIES[entity]['pos'] = moveTo
         
         return False #returnerar False som assignas till playerTurn för att visa att ett drag har genomförts och att spelarens runda är över
-    elif goalTile == GRAPHICS['TEMP_WALL']:
+    elif goalTile == GRAPHICS['TEMP_WALL'] or goalTile == GRAPHICS['DOOR']:
         return True
     else: #om rutan inte är tom så
         if moveTo == ENTITIES['PLAYER']['pos'] and not entity == 'PLAYER':
