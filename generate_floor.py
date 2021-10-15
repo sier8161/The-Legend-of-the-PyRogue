@@ -24,8 +24,9 @@ GRAPHICS={  'PLAYER':'@',
             'ENEMY_SLEEPING':'Z',
             'SHIELD':'H',
             'PIROGUE':'B'}
-
-ENTITIES = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
+floor = []
+level = 1
+entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
                       'room':0, #index i listan floor som innehåller rum
                       'life':2, #2: sköld, 1: ingen sköld, 0:död
                       'evasion': 0
@@ -33,9 +34,25 @@ ENTITIES = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
             #lägg till monster här
             }
 
-
-
-
+monsterCount = 0 #
+# generate_monster är en procedur som ändrar den globala dictionaryn entities för att lägga till ett monster.
+# Parametrar in till denna funktion; diff:integer med svårighetsgrad på monstret, room: integer för index på
+# rummet i floor-listan som den skall genereras i, och coords: tupel med integers för x och y-värden.
+# sidoeffekter: ändrar den globala dictionaryn entities för att lägga till ett monster, och ändrar globala variabeln monsterCount
+def generate_monster(diff,where,room):
+    global monsterCount
+    life = 0
+    evasion = 0
+    for _ in range(diff):
+        life += 1 #temporära värden
+        evasion += 2 #ändra dessa sedan när vi har funderat ut hur vi vill göra med liv och evasion
+    entities[f'MONSTER_{str(monsterCount)}'] = {'pos':where,
+                                                'room':room,
+                                                'life':life,
+                                                'evasion':evasion,
+                                                }
+    place_entity(f'MONSTER_{str(monsterCount)}', entities[f'MONSTER_{str(monsterCount)}']['room'])
+    monsterCount += 1
 
 def generate_room(coords): #returnerar ett dictionary som sparar data kring rummet. Bl.a tiles, koordinater och om dörrar finns eller inte.
     tiles = []
@@ -74,8 +91,6 @@ def needed_doors(room, possibilities): #Sidoeffekt: Ändrar nycklarnas booelska 
         elif coords == (x,y+1):
             room['doors']['T'] = True
             
-                
-
 def create_doors(room):
     tiles = room['tiles']
     if room['doors']['L'] == True:
@@ -87,18 +102,13 @@ def create_doors(room):
     if room['doors']['B'] == True:
         tiles[SIDELENGTH-1][MIDDLE] = GRAPHICS['DOOR']
         
-
 #printar rummet
 def render_room(tiles):
+    clear_console()
     for vertLine in tiles:
         for tile in vertLine:
             print(tile, end="")
         print("\n", end="")
-
-def index_by_key_value(lst, key, value):
-    for dic in lst:
-        if dic[key] == value:
-            return lst.index(dic)
         
 #returnerar en lista av tuples där varje tuple är koordinater som ligger brevid ett bestämt rum
 def possible_placements(roomCoords):
@@ -111,6 +121,7 @@ def possible_placements(roomCoords):
 #problem med funktionen: det blir en enda stor klump av alla rum. Om man inte vill ha det så, hur gör man?
 def generate_floor(level):
     #skapar första rummet vid 0,0
+    global floor
     floor = [generate_room((0,0), )]
     existingRooms= [(0,0)]
     possibilities = [] #lista som lagrar alla möjliga koordinater där nästa rum kan placeras 
@@ -129,45 +140,48 @@ def generate_floor(level):
     for room in floor:
         needed_doors(room, possibilities)
         create_doors(room)
-    ENTITIES['PLAYER']['room'] = randint(0, nRooms) #slumpar vilket rum spelaren börjar i
-    startRoomIndex = index_by_key_value(floor, 'coordinates', ENTITIES['PLAYER']['room'])
-    place_entity('PLAYER', floor, ENTITIES['PLAYER']['pos'])
-    return floor
+    entities['PLAYER']['room'] = randint(0, nRooms) #slumpar vilket rum spelaren börjar i
+    place_entity('PLAYER', entities['PLAYER']['pos'])
 
 
 #Här under finns en del funktioner som interagerar med tiles i rum
 
 #Funktion som placerar en entitet vid bestämda koordinater i tupelform "(x,y)" i ett bestämt rum
-def place_entity(entity, floor, tilecoords):
-    tiles = floor[ENTITIES[entity]['room']]['tiles']
-    x = tilecoords[0]
-    y = tilecoords[1]
+def place_entity(entity, where):
+    tiles = floor[entities[entity]['room']]['tiles']
+    x = where[0]
+    y = where[1]
     yaxis = tiles[x]
-    yaxis[y] = GRAPHICS[entity]
+    if entity == 'PLAYER':
+        graphics = GRAPHICS[entity]
+    else:
+        diff = entity['life']
+        graphics = GRAPHICS[f'ENEMY_{diff}']
+    yaxis[y] = graphics
     
-def delete_entity(floor, entity):
-    tiles = floor[ENTITIES[entity]['room']]['tiles']
-    coords = ENTITIES[entity]['pos']
+def delete_entity(entity):
+    tiles = floor[entities[entity]['room']]['tiles']
+    coords = entities[entity]['pos']
     x = coords[0]
     y = coords[1]
     yaxis = tiles[x]
     yaxis[y] = GRAPHICS['EMPTY']
 
-def move_entity(floor, entity, goalcoords):
-    tiles = floor[ENTITIES[entity]['room']]['tiles'] #OBS! tog player som key till entities för att jag inte förväntar mig att någon ska använda funktionen i ett annat rum och ville göra det enkelt
-    delete_entity(floor, entity)
-    place_entity(entity, floor, goalcoords)
+def move_entity(entity, goalcoords):
+    tiles = floor[entities[entity]['room']]['tiles'] #OBS! tog player som key till entities för att jag inte förväntar mig att någon ska använda funktionen i ett annat rum och ville göra det enkelt
+    delete_entity(entity)
+    place_entity(entity, goalcoords)
 
 #returnerar vad för entitet som befinner sig på en bestömd ruta
-def what_entity(room, tilecoords):
+def what_entity(room, where):
     tiles = room['tiles']
-    x = tilecoords[0]
-    y = tilecoords[1]
+    x = where[0]
+    y = where[1]
     yaxis = tiles[x]
     return yaxis[y]
 
 #Returnerar koordinaterna för en (1) entiet av en viss typ i ett rum
-def find_entity(entityType, floor):
+def find_entity(entityType):
     y = 0
     for xAxis in tiles:
         if entityType in xAxis:
@@ -176,60 +190,60 @@ def find_entity(entityType, floor):
             y += 1
         
 #Returnerar ett rum med bestämda koordinater från ett bestämt floor 
-def find_tiles_by_coord(floor, roomCoords):
+def find_tiles_by_coord(roomCoords):
     for room in floor:
         if room['coordinates']==roomCoords:
             return room['tiles']
 
-def entity_action(floor, entity, moveTo): #Anropas när spelaren trycker på WASD eller när monster gör sitt drag. Om rutan är tom förflyttas man dit, om det finns en entitet där slår man den
-    tiles = floor[ENTITIES[entity]['room']]['tiles']
+def entity_action(entity, moveTo): #Anropas när spelaren trycker på WASD eller när monster gör sitt drag. Om rutan är tom förflyttas man dit, om det finns en entitet där slår man den
+    tiles = floor[entities[entity]['room']]['tiles']
     x = moveTo[0]
     y = moveTo[1]
-    goalTile = floor[ENTITIES[entity]['room']]['tiles'][y][x]
+    goalTile = floor[entities[entity]['room']]['tiles'][y][x]
     if goalTile == GRAPHICS['EMPTY']: #om rutan är tom förflyttas entiteten dit
-        move_entity(floor, entity, moveTo)
-        ENTITIES[entity]['pos'] = moveTo
+        move_entity(entity, moveTo)
+        entities[entity]['pos'] = moveTo
         
         return False #returnerar False som assignas till playerTurn för att visa att ett drag har genomförts och att spelarens runda är över
     elif goalTile == GRAPHICS['TEMP_WALL'] or goalTile == GRAPHICS['DOOR']:
         return True
     else: #om rutan inte är tom så
-        if moveTo == ENTITIES['PLAYER']['pos'] and not entity == 'PLAYER':
-            attack_entity(entity, ENTITIES['PLAYER']) #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
+        if moveTo == entities['PLAYER']['pos'] and not entity == 'PLAYER':
+            attack_entity(entity, entities['PLAYER']) #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
         if entity == 'PLAYER':
             for i in range(6):
-                if moveTo == ENTITIES[f'{i}']['pos']:
-                    attack_entity(ENTITIES['PLAYER'], ENTITIES[f'{i}'])
+                if moveTo == entities[f'{i}']['pos']:
+                    attack_entity(entities['PLAYER'], entities[f'{i}'])
                     return False
    
             
-def playerTurn(floor):
-    render_room(floor[ENTITIES['PLAYER']['room']]['tiles'])
+def playerTurn():
+    render_room(floor[entities['PLAYER']['room']]['tiles'])
     while True:
         playersTurn = True
         while playersTurn == True:
             if keyboard.is_pressed('w'): # move up
-                playersTurn = entity_action(floor, 'PLAYER',
-                                            (ENTITIES['PLAYER']['pos'][0]-1, ENTITIES['PLAYER']['pos'][1]))
+                playersTurn = entity_action('PLAYER',
+                                            (entities['PLAYER']['pos'][0]-1, entities['PLAYER']['pos'][1]))
 
             if keyboard.is_pressed('a'): # move left
-                playersTurn = entity_action(floor,'PLAYER',
-                                            (ENTITIES['PLAYER']['pos'][0], ENTITIES['PLAYER']['pos'][1]-1))
+                playersTurn = entity_action('PLAYER',
+                                            (entities['PLAYER']['pos'][0], entities['PLAYER']['pos'][1]-1))
 
             if keyboard.is_pressed('s'): # move down
-                playersTurn = entity_action(floor,'PLAYER',
-                                            (ENTITIES['PLAYER']['pos'][0]+1, ENTITIES['PLAYER']['pos'][1]))
+                playersTurn = entity_action('PLAYER',
+                                            (entities['PLAYER']['pos'][0]+1, entities['PLAYER']['pos'][1]))
 
             if keyboard.is_pressed('d'):# move right
-                playersTurn = entity_action(floor,'PLAYER',
-                                            (ENTITIES['PLAYER']['pos'][0], ENTITIES['PLAYER']['pos'][1]+1))
+                playersTurn = entity_action('PLAYER',
+                                            (entities['PLAYER']['pos'][0], entities['PLAYER']['pos'][1]+1))
             if keyboard.is_pressed('q'): #attack
                 pass
             if keyboard.is_pressed('e'): #wait
                 pass
                 playersTurn = False
         
-        render_room(floor[ENTITIES['PLAYER']['room']]['tiles'])
+        render_room(floor[entities['PLAYER']['room']]['tiles'])
 
 def testing_create_doors(door):
     testroom = generate_room((0,0))
@@ -239,7 +253,8 @@ def testing_create_doors(door):
     render_room(testroom)
     
 def testing_movement():
-    floor = generate_floor(1)
-    playerTurn(floor)
+    generate_floor(level)
+    generate_monster(1,(4,4),floor[0])
+    playerTurn()
     
 testing_movement()
