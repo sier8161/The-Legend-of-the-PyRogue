@@ -56,6 +56,9 @@ def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är 
     place_entity(f'MONSTER_{str(monsterCount)}', entities[f'MONSTER_{str(monsterCount)}']['pos'])
     monsterCount += 1
 
+#Denna funktion returnerar ett dictionary som representerar ett rum datamässigt. 
+#Argument: coords: Avgör vilka koordinater som rummet har i nivån (floor).
+#Anropas i funktionen generate_floor.
 def generate_room(coords): #returnerar ett dictionary som sparar data kring rummet. Bl.a tiles, koordinater och om dörrar finns eller inte.
     tiles = []
     for horizLine in range(SIDELENGTH):
@@ -74,7 +77,9 @@ def generate_room(coords): #returnerar ett dictionary som sparar data kring rumm
             "doors": {"T": False, "B": False, "L": False, "R": False}} #dörrarna är (up down left right)
     return room
 
-def needed_doors(room, possibilities): #Sidoeffekt: Ändrar nycklarnas booelska värden i doors-ordboken så att man vet vilka håll som rummen behöver ha dörrar till
+#Funktion som avgör vilka dörrar som kommer behövas skapas efter att alla rum i nivån är sammansatta. Sidoeffekten är att ett bestämt rums (dvs ett dictionary) booleska värden för om dörrar ska finnas ändras.
+#Argument: room: ett dictionary (som representerar ett rum) som man vill använda funktionen på. Possibilities: en lista bestående av alla möjliga nya placeringar som skapats från generate_floor och används för att veta vilka dörrar som inte ska finnas. 
+def needed_doors(room, possibilities):
     roomCoords = room['coordinates']
     x = roomCoords[0]
     y = roomCoords[1]
@@ -89,7 +94,8 @@ def needed_doors(room, possibilities): #Sidoeffekt: Ändrar nycklarnas booelska 
             room['doors']['B'] = True
         elif coords == (x,y+1):
             room['doors']['T'] = True
-            
+
+#Sidoeffekt: ändrar argumentet "room"s (en dictionary) tiles så att de dörrar som ska finnas finns.
 def create_doors(room):
     tiles = room['tiles']
     if room['doors']['L'] == True:
@@ -101,7 +107,7 @@ def create_doors(room):
     if room['doors']['B'] == True:
         tiles[SIDELENGTH-1][MIDDLE] = GRAPHICS['DOOR']
         
-#printar rummet
+#Sidoeffekt: tar bort allt som tidigare printats och printar rummet
 def render_room(tiles):
     clear_console()
     for vertLine in tiles:
@@ -117,8 +123,7 @@ def possible_placements(roomCoords):
     listy = [((x+1), y), ((x-1), y), (x, (y-1)), (x, (y+1))]
     return listy    
     
-#Returnerar en lista bestående av dictionaries som representerar alla rum
-#problem med funktionen: det blir en enda stor klump av alla rum. Om man inte vill ha det så, hur gör man?
+#Skapar en lista (globalt) som representerar en floor datamässigt. Tar argumentet level som (för nuvarande enbart) påverkar hur många rum som finns 
 def generate_floor(level):
     #skapar första rummet vid 0,0
     global floor
@@ -145,8 +150,7 @@ def generate_floor(level):
 
 #Här under finns en del funktioner som interagerar med tiles i rum
 
-#Funktion som placerar en entitet vid bestämda koordinater i tupelform "(x,y)" i ett bestämt rum
-
+#Funktion som placerar en entitet vid bestämda koordinater. Argumentet entity är vilken entitet och where är koordinaterna i (x,y) form
 def place_entity(entity, where):
     tiles = floor[entities[entity]['room']]['tiles']
     x = where[0]
@@ -160,6 +164,7 @@ def place_entity(entity, where):
     yaxis[x] = graphics
     
 
+#Tar bort en entitet. Tar entity som argument vilket är den entitet som ska tas bort
 def delete_entity(entity):
     tiles = floor[entities[entity]['room']]['tiles']
     coords = entities[entity]['pos']
@@ -168,14 +173,14 @@ def delete_entity(entity):
     yaxis = tiles[y]
     yaxis[x] = GRAPHICS['EMPTY']
 
-
+#Flyttar en entitet till bestämda koordinater. Tar argumenten entity vilket är vilken entitet och where som är koordinaterna för vart den ska flyttas
 def move_entity(entity, where):
     tiles = floor[entities[entity]['room']]['tiles'] #OBS! tog player som key till entities för att jag inte förväntar mig att någon ska använda funktionen i ett annat rum och ville göra det enkelt
     delete_entity(entity)
     place_entity(entity, where)
     entities[entity]['pos'] = where
 
-#returnerar vad för entitet som befinner sig på en bestömd ruta
+#returnerar vad för entitet som befinner sig på en bestömd ruta. Tar argumenten room som är rummet som man vill leta efter en entitet i och where som är vilka koordinater i tiles där man vill veta vilken entitet som befinner sig där
 def what_entity(room, where):
     tiles = room['tiles']
     x = where[0]
@@ -191,21 +196,16 @@ def find_entity(entityType):
             return (y, xAxis.index(entityType))
         else:
             y += 1
-
+            
+#Förflyttar spelaren från ett rum till ett annat. Tar argumenten room som är det rum man önskar att flytta till och where som är de koordinater man önskar att flytta till i det nya rummet
 def move_between_rooms(room, where):
     delete_entity('PLAYER')
     entities['PLAYER']['room'] = floor.index(room)
     place_entity('PLAYER', where)
     entities['PLAYER']['pos'] = where
-    
-#Returnerar ett rum med bestämda koordinater från ett bestämt floor 
-def find_tiles_by_coord(roomCoords):
-    for room in floor:
-        if room['coordinates']==roomCoords:
-            return room['tiles']
 
-
-def entity_action(entity, where): #Anropas när spelaren trycker på WASD eller när monster gör sitt drag. Om rutan är tom förflyttas man dit, om det finns en entitet där slår man den
+#Anropas när spelaren trycker på WASD eller när monster gör sitt drag. Beroende på vad som finns på rutan så händer olika saker, t.ex. om rutan är tom förflyttas entiteten dit, om det finns en entitet där slår man den
+def entity_action(entity, where): 
     tiles = floor[entities[entity]['room']]['tiles']
     x = where[0]
     y = where[1]
@@ -225,7 +225,8 @@ def entity_action(entity, where): #Anropas när spelaren trycker på WASD eller 
             attack_entity(entities['PLAYER'], what_entity(floor, where))
             return False
 
-#returnerar indexet i floor för det nya rummet
+#Anropas när spelarens koordinater 'where' i entity_action är en dörr. Då avgör denna funktion vilket rum spelaren ska förflytta sig till.
+#Tar argumentet coords vilket är koordinaterna 'where' som entity_action anropades med
 def change_room(coords):
     index = 0
     roomCoords = floor[entities['PLAYER']['room']]['coordinates']
@@ -256,7 +257,7 @@ def change_room(coords):
     
         
         
-
+#Anropas för att ge spelaren möjlighet att ge inputs för att göra sitt drag. 
 def playerTurn():
     render_room(floor[entities['PLAYER']['room']]['tiles'])
     while True:
@@ -285,6 +286,8 @@ def playerTurn():
         
         render_room(floor[entities['PLAYER']['room']]['tiles'])
 
+
+#Testfunktioner
 def testing_create_doors(door):
     testroom = generate_room((0,0))
     render_room(testroom)
