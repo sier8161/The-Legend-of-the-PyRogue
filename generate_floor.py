@@ -43,6 +43,7 @@ monsterCount = 0 #
 # sidoeffekter: ändrar den globala dictionaryn entities för att lägga till ett monster, och ändrar globala variabeln monsterCount
 def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är ett index för listan floor där indexet motsvarar ett dictionary som är ett rum
     global monsterCount
+    monsterCount += 1 #iom att vi ökar monstercount innan monstret skapas så kommer första monstret få 'entiteten' MONSTER_1
     life = 0
     evasion = 0
     for _ in range(diff):
@@ -54,7 +55,6 @@ def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är 
                                                 'evasion':evasion,
                                                 }
     place_entity(f'MONSTER_{str(monsterCount)}', entities[f'MONSTER_{str(monsterCount)}']['pos'])
-    monsterCount += 1
 
 #procedur som anropar generate_monster flertalet gånger för att skapa en mängd 'quantity' monster på slumpmässiga platser med slumpmässiga stats.
 #OBS! EJ KLAR då den skall vikta antal fiender mot svårighetsgrad osv för att balansera spelet, vi får titta på det senare.
@@ -246,7 +246,7 @@ def entity_action(entity, where):
         attack_entity(entity, entities['PLAYER']) #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
         return False
     elif goalTile == GRAPHICS['ENEMY_1'] or goalTile == GRAPHICS['ENEMY_2'] or goalTile == GRAPHICS['ENEMY_3']:
-        attack_entity(entities['PLAYER'], what_entity(floor[entities[entity]['room']], where))
+        attack_entity(entities['PLAYER'], what_entity(entities[entity]['room'], where))
         return False
     else:
         return True
