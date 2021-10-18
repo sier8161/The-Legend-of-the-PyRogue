@@ -31,7 +31,7 @@ level = 1
 entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
                       'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                       'life':2, #2: sköld, 1: ingen sköld, 0:död
-                      'evasion': 0
+                      'evasion': 1
                        }
             #lägg till monster här
             }
@@ -198,8 +198,7 @@ def place_entity(entity, where):
 def delete_entity(entity):
     tiles = floor[entities[entity]['room']]['tiles']
     coords = entities[entity]['pos']
-    x = coords[0]
-    y = coords[1]
+    x, y = coords #då 'coords' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     yaxis = tiles[y]
     yaxis[x] = GRAPHICS['EMPTY']
 
@@ -213,20 +212,18 @@ def move_entity(entity, where):
 #returnerar vad för entitet som befinner sig på en bestömd ruta. Tar argumenten room som är rummet som man vill leta efter en entitet i
 #och where som är vilka koordinater i tiles där man vill veta vilken entitet som befinner sig där
 def what_entity(room, where):
-    tiles = room['tiles']
-    x = where[0]
-    y = where[1]
-    yaxis = tiles[y]
-    return yaxis[x]
+    for e in entities:
+        entity = entities[e]
+        if entity['room'] == room:
+            if entity['pos'] == where:
+                return entity
   
-#Returnerar koordinaterna för en (1) entitet av en viss typ i ett rum
-def find_entity(entityType):
-    y = 0
-    for xAxis in tiles:
-        if entityType in xAxis:
-            return (y, xAxis.index(entityType))
-        else:
-            y += 1
+#Returnerar koordinaterna för en (1) entitet av en viss typ i ett rum 
+def where_entity(room,entity):
+    for e in entities:
+        if entity == entities[e]:
+            if entity['room'] == room:
+                return entity['pos']
             
 #Förflyttar spelaren från ett rum till ett annat. Tar argumenten room som är det rum man önskar att flytta till och where som är de koordinater man önskar att flytta till i det nya rummet
 def move_between_rooms(room, where):
@@ -239,23 +236,31 @@ def move_between_rooms(room, where):
 #t.ex. om rutan är tom förflyttas entiteten dit, om det finns en entitet där slår man den
 def entity_action(entity, where): 
     tiles = floor[entities[entity]['room']]['tiles']
-    x = where[0]
-    y = where[1]
+    x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     goalTile = floor[entities[entity]['room']]['tiles'][y][x]
     if goalTile == GRAPHICS['EMPTY']: #om rutan är tom förflyttas entiteten dit
         move_entity(entity, where)
         return False #returnerar False som assignas till playerTurn för att visa att ett drag har genomförts och att spelarens runda är över
-    elif goalTile == GRAPHICS['V_WALL'] or goalTile == GRAPHICS['H_WALL']:
-        return True
     elif goalTile == GRAPHICS['V_DOOR'] or goalTile == GRAPHICS['H_DOOR']:
-         change_room(where)
-         return False
-    else: #om rutan inte är tom så
-        if where == entities['PLAYER']['pos'] and not entity == 'PLAYER':
-            attack_entity(entity, entities['PLAYER']) #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
-        if entity == 'PLAYER':
-            attack_entity(entities['PLAYER'], what_entity(floor, where))
-            return False
+        change_room(where)
+        return False
+    elif where == entities['PLAYER']['pos'] and not entity == 'PLAYER':
+        attack_entity(entity, entities['PLAYER']) #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
+        return False
+    elif goalTile == GRAPHICS['ENEMY_1'] or goalTile == GRAPHICS['ENEMY_2'] or goalTile == GRAPHICS['ENEMY_3']:
+        attack_entity(entities['PLAYER'], what_entity(floor[entities[entity]['room']], where))
+        return False
+    else:
+        return True
+
+def attack_entity(attacker,defender):
+    rHit = randint(0,10)
+    if int(rHit-defender['evasion']) >= 5:
+        defender['life'] -= 1
+    if defender['life'] >0:
+        rCounterHit = randint(0,9)
+        if int(rCounterHit-attacker['evasion']) >= 5:
+            attacker['life'] -= 1
 
 #Anropas när spelarens koordinater 'where' i entity_action är en dörr. Då avgör denna funktion vilket rum spelaren ska förflytta sig till.
 #Tar argumentet coords vilket är koordinaterna 'where' som entity_action anropades med
