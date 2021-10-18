@@ -213,17 +213,15 @@ def move_entity(entity, where):
 #och where som är vilka koordinater i tiles där man vill veta vilken entitet som befinner sig där
 def what_entity(room, where):
     for e in entities:
-        entity = entities[e]
-        if entity['room'] == room:
-            if entity['pos'] == where:
-                return entity
+        if entities[e]['room'] == room:
+            if entities[e]['pos'] == where:
+                return entities[e]
   
 #Returnerar koordinaterna för en (1) entitet av en viss typ i ett rum 
 def where_entity(room,entity):
-    for e in entities:
-        if entity == entities[e]:
-            if entity['room'] == room:
-                return entity['pos']
+    if entity in entities:
+        if entities[entity]['room'] == room:
+            return entities[entity]['pos']
             
 #Förflyttar spelaren från ett rum till ett annat. Tar argumenten room som är det rum man önskar att flytta till och where som är de koordinater man önskar att flytta till i det nya rummet
 def move_between_rooms(room, where):
