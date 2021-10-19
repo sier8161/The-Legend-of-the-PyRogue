@@ -2,7 +2,10 @@ from random import randint
 import keyboard
 import os
 from time import sleep
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 clear_console = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear') #för körning i kommandotolk
 
 SIDELENGTH = 15 # Kvadratiskt rum med sidlängd SIDELENGTH
@@ -30,11 +33,21 @@ combatPromptAttack = ""
 combatPromptCounter = ""
 floor = []
 level = 1
+<<<<<<< Updated upstream
 entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
                       'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                       'life':2, #2: sköld, 1: ingen sköld, 0:död
                       'evasion': 1
                        'name': 'Player' #Implementera ett sätt för spelaren att få använda sitt namn?
+=======
+combatPromptAttack = ""
+combatPromptCounter = ""
+entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
+                      'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
+                      'life':2, #2: sköld, 1: ingen sköld, 0:död
+                      'evasion': 1,
+                      'name': 'Player'
+>>>>>>> Stashed changes
                        }
             #lägg till monster här
             }
@@ -142,12 +155,22 @@ def create_doors(room):
         
 #Sidoeffekt: tar bort allt som tidigare printats och printar rummet
 def render_room(tiles):
+    global combatPromptAttack
+    global combatPromptCounter
     clear_console()
     for vertLine in tiles:
         for tile in vertLine:
             print(tile, end="")
         print("\n", end="")
+<<<<<<< Updated upstream
     print(floor[entities['PLAYER']['room']]['coordinates'])
+=======
+    print(combatPromptAttack)
+    print(combatPromptCounter)
+    print(str(floor[entities['PLAYER']['room']]['coordinates'])+" room n: "+str(entities['PLAYER']['room']))
+    combatPromptAttack = ""
+    combatPromptCounter = ""
+>>>>>>> Stashed changes
         
 #returnerar en lista av tuples där varje tuple är koordinater som ligger brevid ett bestämt rum
 def possible_placements(roomCoords):
@@ -256,7 +279,10 @@ def entity_action(entity, where):
         return True
 
 def attack_entity(attacker,defender):
+    global combatPromptAttack
+    global combatPromptCounter
     rHit = randint(0,10)
+<<<<<<< Updated upstream
     if int(rHit-defender['evasion']) >= 5:
         defender['life'] -= 1
         combatPromptAttack = f"{attacker['name']} attack and hit {defender['name']}"
@@ -267,6 +293,22 @@ def attack_entity(attacker,defender):
         rCounterHit = randint(0,9)
         if int(rCounterHit-attacker['evasion']) >= 5:
             attacker['life'] -= 1
+=======
+    hitormiss = "misses"
+    if rHit-int(entities[defender]['evasion']) >= 5:
+        entities[defender]['life'] -= 1
+        hitormiss = "damages"
+    combatPromptAttack = f"{entities[attacker]['name']} attacks and {hitormiss} {entities[defender]['name']}"
+    
+    if entities[defender]['life'] >0:
+        rCounterHit = randint(0,9)
+        if rCounterHit-int(entities[attacker]['evasion']) >= 5:
+            entities[attacker]['life'] -= 1
+            combatPromptCounter = f"{entities[defender]['name']} successfully performs a counter-attack, damaging {entities[attacker]['name']}"
+    update_entity(attacker, entities[attacker]['pos'])
+    update_entity(defender, entities[defender]['pos'])
+            
+>>>>>>> Stashed changes
 
 #Anropas när spelarens koordinater 'where' i entity_action är en dörr. Då avgör denna funktion vilket rum spelaren ska förflytta sig till.
 #Tar argumentet coords vilket är koordinaterna 'where' som entity_action anropades med
@@ -330,6 +372,10 @@ def playerTurn():
         combatPromptAttack = ""
         combatPromptCounter = ""
         sleep(0.1)
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 
 #Testfunktioner
 def testing_create_doors(door):
@@ -341,7 +387,7 @@ def testing_create_doors(door):
     
 def testing_movement():
     generate_floor()
-    generate_monsters(2)
+    generate_monsters(10)
     playerTurn()
     
 testing_movement()
