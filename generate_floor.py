@@ -2,16 +2,14 @@ from random import randint
 import keyboard
 import os
 from time import sleep
-<<<<<<< Updated upstream
 
-=======
->>>>>>> Stashed changes
 clear_console = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear') #för körning i kommandotolk
 
 SIDELENGTH = 15 # Kvadratiskt rum med sidlängd SIDELENGTH
 MIDDLE = int(SIDELENGTH/2)
 GRAPHICS={  'PLAYER':'@',
             'PLAYER_DAMAGED':'a',
+            'PLAYER_DEAD':'†',
             'TL_WALL':'╔', #TL står för top-left
             'TR_WALL':'╗', #TR står för top-right
             'BL_WALL':'╚', #BL står för bottom-left
@@ -29,17 +27,18 @@ GRAPHICS={  'PLAYER':'@',
             'SHIELD':'H',
             'PIROGUE':'B'}
 
+
 combatPromptAttack = ""
 combatPromptCounter = ""
 floor = []
 level = 1
-<<<<<<< Updated upstream
+
 entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
                       'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                       'life':2, #2: sköld, 1: ingen sköld, 0:död
                       'evasion': 1
                        'name': 'Player' #Implementera ett sätt för spelaren att få använda sitt namn?
-=======
+
 combatPromptAttack = ""
 combatPromptCounter = ""
 entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
@@ -47,7 +46,7 @@ entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
                       'life':2, #2: sköld, 1: ingen sköld, 0:död
                       'evasion': 1,
                       'name': 'Player'
->>>>>>> Stashed changes
+
                        }
             #lägg till monster här
             }
@@ -64,7 +63,7 @@ def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är 
     evasion = 0
     for _ in range(diff):
         life += 1 #temporära värden
-        evasion += 2 #ändra dessa sedan när vi har funderat ut hur vi vill göra med liv och evasion
+        evasion += 0 #ändra dessa sedan när vi har funderat ut hur vi vill göra med liv och evasion
     entities[f'MONSTER_{str(monsterCount)}'] = {'pos':where,
                                                 'room':room,
                                                 'life':life,
@@ -162,15 +161,12 @@ def render_room(tiles):
         for tile in vertLine:
             print(tile, end="")
         print("\n", end="")
-<<<<<<< Updated upstream
     print(floor[entities['PLAYER']['room']]['coordinates'])
-=======
     print(combatPromptAttack)
     print(combatPromptCounter)
     print(str(floor[entities['PLAYER']['room']]['coordinates'])+" room n: "+str(entities['PLAYER']['room']))
     combatPromptAttack = ""
     combatPromptCounter = ""
->>>>>>> Stashed changes
         
 #returnerar en lista av tuples där varje tuple är koordinater som ligger brevid ett bestämt rum
 def possible_placements(roomCoords):
@@ -206,28 +202,42 @@ def generate_floor():
 
 #Här under finns en del funktioner som interagerar med tiles i rum
 
-#Funktion som placerar en entitet vid bestämda koordinater. Argumentet entity är vilken entitet och where är koordinaterna i (x,y) form
+#Funktion som placerar en entitet vid bestämda koordinater. (GRAFIK)
+#Argumentet entity är vilken entitet och where är koordinaterna i (x,y) form
 def place_entity(entity, where):
     tiles = floor[entities[entity]['room']]['tiles']
     
     if entity == 'PLAYER':
-        graphics = GRAPHICS[entity]
+        if entities['PLAYER']['life'] == 2:
+            graphics = GRAPHICS['PLAYER']
+        elif entities['PLAYER']['life'] == 1:
+            graphics = GRAPHICS['PLAYER_DAMAGED']
+        elif entities['PLAYER']['life'] == 0:
+            graphics = GRAPHICS['PLAYER_DEAD']
     else:
         diff = entities[entity]['life']
-        graphics = GRAPHICS[f'ENEMY_{diff}']
+        if diff > 0:
+            graphics = GRAPHICS[f'ENEMY_{diff}']
+        else:
+            graphics = GRAPHICS['EMPTY']
+            del entities[entity]
         
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     yaxis = tiles[y]
     yaxis[x] = graphics
     
 
-#Tar bort en entitet. Tar entity som argument vilket är den entitet som ska tas bort
+#Tar bort en entitet. Tar entity som argument vilket är den entitet som ska tas bort (ÄNDRAR ENDAST GRAFISK REPRESENTATION)
 def delete_entity(entity):
     tiles = floor[entities[entity]['room']]['tiles']
     coords = entities[entity]['pos']
     x, y = coords #då 'coords' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     yaxis = tiles[y]
     yaxis[x] = GRAPHICS['EMPTY']
+    
+def update_entity(entity,where):
+    delete_entity(entity)
+    place_entity(entity, where)
 
 #Flyttar en entitet till bestämda koordinater. Tar argumenten entity vilket är vilken entitet och where som är koordinaterna för vart den ska flyttas
 def move_entity(entity, where):
@@ -239,16 +249,17 @@ def move_entity(entity, where):
 #returnerar vad för entitet som befinner sig på en bestömd ruta. Tar argumenten room som är rummet som man vill leta efter en entitet i
 #och where som är vilka koordinater i tiles där man vill veta vilken entitet som befinner sig där
 def what_entity(room, where):
-    for e in entities:
-        if entities[e]['room'] == room:
-            if entities[e]['pos'] == where:
-                return entities[e]
+    for entity in entities:
+        if entities[entity]['room'] == room:
+            if entities[entity]['pos'] == where:
+                return entity
   
 #Returnerar koordinaterna för en (1) entitet av en viss typ i ett rum 
 def where_entity(room,entity):
     if entity in entities:
         if entities[entity]['room'] == room:
-            return entities[entity]['pos']
+            where = entities[entity]['pos']
+            return where
             
 #Förflyttar spelaren från ett rum till ett annat. Tar argumenten room som är det rum man önskar att flytta till och where som är de koordinater man önskar att flytta till i det nya rummet
 def move_between_rooms(room, where):
@@ -259,7 +270,10 @@ def move_between_rooms(room, where):
 
 #Anropas när spelaren trycker på WASD eller när monster gör sitt drag. Beroende på vad som finns på rutan så händer olika saker,
 #t.ex. om rutan är tom förflyttas entiteten dit, om det finns en entitet där slår man den
-def entity_action(entity, where): 
+def entity_action(entity, where):
+    #if entities['PLAYER']['life'] == 0:
+        #cause = "dead"
+        #end_game(cause)
     tiles = floor[entities[entity]['room']]['tiles']
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     goalTile = floor[entities[entity]['room']]['tiles'][y][x]
@@ -270,10 +284,10 @@ def entity_action(entity, where):
         change_room(where)
         return False
     elif where == entities['PLAYER']['pos'] and not entity == 'PLAYER':
-        attack_entity(entities[entity], entities['PLAYER']) #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
+        attack_entity(entity, 'PLAYER')
         return False
     elif goalTile == GRAPHICS['ENEMY_1'] or goalTile == GRAPHICS['ENEMY_2'] or goalTile == GRAPHICS['ENEMY_3']:
-        attack_entity(entities['PLAYER'], what_entity(entities[entity]['room'], where))
+        attack_entity('PLAYER', what_entity(entities[entity]['room'], where))
         return False
     else:
         return True
@@ -282,19 +296,8 @@ def attack_entity(attacker,defender):
     global combatPromptAttack
     global combatPromptCounter
     rHit = randint(0,10)
-<<<<<<< Updated upstream
-    if int(rHit-defender['evasion']) >= 5:
-        defender['life'] -= 1
-        combatPromptAttack = f"{attacker['name']} attack and hit {defender['name']}"
-    elif int(rHit-defender['evasion']) < 5:
-        combatPromptAttack = ""
-    
-    if defender['life'] >0:
-        rCounterHit = randint(0,9)
-        if int(rCounterHit-attacker['evasion']) >= 5:
-            attacker['life'] -= 1
-=======
-    hitormiss = "misses"
+                       
+    hitormiss = "misses"                   
     if rHit-int(entities[defender]['evasion']) >= 5:
         entities[defender]['life'] -= 1
         hitormiss = "damages"
@@ -308,8 +311,6 @@ def attack_entity(attacker,defender):
     update_entity(attacker, entities[attacker]['pos'])
     update_entity(defender, entities[defender]['pos'])
             
->>>>>>> Stashed changes
-
 #Anropas när spelarens koordinater 'where' i entity_action är en dörr. Då avgör denna funktion vilket rum spelaren ska förflytta sig till.
 #Tar argumentet coords vilket är koordinaterna 'where' som entity_action anropades med
 def change_room(coords):
@@ -372,10 +373,6 @@ def playerTurn():
         combatPromptAttack = ""
         combatPromptCounter = ""
         sleep(0.1)
-<<<<<<< Updated upstream
-=======
-
->>>>>>> Stashed changes
 
 #Testfunktioner
 def testing_create_doors(door):
