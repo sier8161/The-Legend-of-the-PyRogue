@@ -49,7 +49,7 @@ def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är 
     evasion = 0
     for _ in range(diff):
         life += 1 #temporära värden
-        evasion += 2 #ändra dessa sedan när vi har funderat ut hur vi vill göra med liv och evasion
+        evasion += 0 #ändra dessa sedan när vi har funderat ut hur vi vill göra med liv och evasion
     entities[f'MONSTER_{str(monsterCount)}'] = {'pos':where,
                                                 'room':room,
                                                 'life':life,
@@ -225,16 +225,17 @@ def move_entity(entity, where):
 #returnerar vad för entitet som befinner sig på en bestömd ruta. Tar argumenten room som är rummet som man vill leta efter en entitet i
 #och where som är vilka koordinater i tiles där man vill veta vilken entitet som befinner sig där
 def what_entity(room, where):
-    for e in entities:
-        if entities[e]['room'] == room:
-            if entities[e]['pos'] == where:
-                return e
+    for entity in entities:
+        if entities[entity]['room'] == room:
+            if entities[entity]['pos'] == where:
+                return entity
   
 #Returnerar koordinaterna för en (1) entitet av en viss typ i ett rum 
 def where_entity(room,entity):
     if entity in entities:
         if entities[entity]['room'] == room:
-            return entities[entity]['pos']
+            where = entities[entity]['pos']
+            return where
             
 #Förflyttar spelaren från ett rum till ett annat. Tar argumenten room som är det rum man önskar att flytta till och where som är de koordinater man önskar att flytta till i det nya rummet
 def move_between_rooms(room, where):
