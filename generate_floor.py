@@ -228,7 +228,7 @@ def what_entity(room, where):
     for e in entities:
         if entities[e]['room'] == room:
             if entities[e]['pos'] == where:
-                return entities[e]
+                return e
   
 #Returnerar koordinaterna för en (1) entitet av en viss typ i ett rum 
 def where_entity(room,entity):
@@ -256,24 +256,24 @@ def entity_action(entity, where):
         change_room(where)
         return False
     elif where == entities['PLAYER']['pos'] and not entity == 'PLAYER':
-        attack_entity(entity, entities['PLAYER']) #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
+        attack_entity(entity, 'PLAYER') #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
         return False
     elif goalTile == GRAPHICS['ENEMY_1'] or goalTile == GRAPHICS['ENEMY_2'] or goalTile == GRAPHICS['ENEMY_3']:
-        attack_entity(entities['PLAYER'], what_entity(entities[entity]['room'], where))
+        attack_entity('PLAYER', what_entity(entities[entity]['room'], where))
         return False
     else:
         return True
 
 def attack_entity(attacker,defender):
     rHit = randint(0,10)
-    if rHit-defender['evasion'] >= 5:
-        defender['life'] -= 1
-    if defender['life'] >0:
+    if rHit-int(entities[defender]['evasion']) >= 5:
+        entities[defender]['life'] -= 1
+    if entities[defender]['life'] >0:
         rCounterHit = randint(0,9)
-        if rCounterHit-attacker['evasion'] >= 5:
-            attacker['life'] -= 1
-    update_entity(attacker, attacker['pos'])
-    update_entity(defender, defender['pos'])
+        if rCounterHit-int(entities[attacker]['evasion']) >= 5:
+            entities[attacker]['life'] -= 1
+    update_entity(attacker, entities[attacker]['pos'])
+    update_entity(defender, entities[defender]['pos'])
             
 
 #Anropas när spelarens koordinater 'where' i entity_action är en dörr. Då avgör denna funktion vilket rum spelaren ska förflytta sig till.
