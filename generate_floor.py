@@ -8,6 +8,7 @@ SIDELENGTH = 15 # Kvadratiskt rum med sidlängd SIDELENGTH
 MIDDLE = int(SIDELENGTH/2)
 GRAPHICS={  'PLAYER':'@',
             'PLAYER_DAMAGED':'a',
+            'PLAYER_DEAD':'†',
             'TL_WALL':'╔', #TL står för top-left
             'TR_WALL':'╗', #TR står för top-right
             'BL_WALL':'╚', #BL står för bottom-left
@@ -25,9 +26,9 @@ GRAPHICS={  'PLAYER':'@',
             'SHIELD':'H',
             'PIROGUE':'B'}
 
-
 floor = []
 level = 1
+
 entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
                       'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                       'life':2, #2: sköld, 1: ingen sköld, 0:död
@@ -143,7 +144,7 @@ def render_room(tiles):
         for tile in vertLine:
             print(tile, end="")
         print("\n", end="")
-    print(floor[entities['PLAYER']['room']]['coordinates'])
+    print(str(floor[entities['PLAYER']['room']]['coordinates'])+" room n: "+str(entities['PLAYER']['room']))
         
 #returnerar en lista av tuples där varje tuple är koordinater som ligger brevid ett bestämt rum
 def possible_placements(roomCoords):
@@ -179,28 +180,40 @@ def generate_floor():
 
 #Här under finns en del funktioner som interagerar med tiles i rum
 
-#Funktion som placerar en entitet vid bestämda koordinater. Argumentet entity är vilken entitet och where är koordinaterna i (x,y) form
+#Funktion som placerar en entitet vid bestämda koordinater. (GRAFIK)
+#Argumentet entity är vilken entitet och where är koordinaterna i (x,y) form
 def place_entity(entity, where):
     tiles = floor[entities[entity]['room']]['tiles']
     
     if entity == 'PLAYER':
-        graphics = GRAPHICS[entity]
+        if entities['PLAYER']['life'] == 2:
+            graphics = GRAPHICS['PLAYER']
+        elif entities['PLAYER']['life'] == 1:
+            graphics = GRAPHICS['PLAYER_DAMAGED']
     else:
         diff = entities[entity]['life']
-        graphics = GRAPHICS[f'ENEMY_{diff}']
+        if diff > 0:
+            graphics = GRAPHICS[f'ENEMY_{diff}']
+        else:
+            graphics = GRAPHICS['EMPTY']
+            del entities[entity]
         
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     yaxis = tiles[y]
     yaxis[x] = graphics
     
 
-#Tar bort en entitet. Tar entity som argument vilket är den entitet som ska tas bort
+#Tar bort en entitet. Tar entity som argument vilket är den entitet som ska tas bort (ÄNDRAR ENDAST GRAFISK REPRESENTATION)
 def delete_entity(entity):
     tiles = floor[entities[entity]['room']]['tiles']
     coords = entities[entity]['pos']
     x, y = coords #då 'coords' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     yaxis = tiles[y]
     yaxis[x] = GRAPHICS['EMPTY']
+    
+def update_entity(entity,where):
+    delete_entity(entity)
+    place_entity(entity, where)
 
 #Flyttar en entitet till bestämda koordinater. Tar argumenten entity vilket är vilken entitet och where som är koordinaterna för vart den ska flyttas
 def move_entity(entity, where):
@@ -253,12 +266,15 @@ def entity_action(entity, where):
 
 def attack_entity(attacker,defender):
     rHit = randint(0,10)
-    if int(rHit-defender['evasion']) >= 5:
+    if rHit-defender['evasion'] >= 5:
         defender['life'] -= 1
     if defender['life'] >0:
         rCounterHit = randint(0,9)
-        if int(rCounterHit-attacker['evasion']) >= 5:
+        if rCounterHit-attacker['evasion'] >= 5:
             attacker['life'] -= 1
+    update_entity(attacker, attacker['pos'])
+    update_entity(defender, defender['pos'])
+            
 
 #Anropas när spelarens koordinater 'where' i entity_action är en dörr. Då avgör denna funktion vilket rum spelaren ska förflytta sig till.
 #Tar argumentet coords vilket är koordinaterna 'where' som entity_action anropades med
