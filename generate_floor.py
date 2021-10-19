@@ -36,8 +36,10 @@ level = 1
 entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
                       'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                       'life':2, #2: sköld, 1: ingen sköld, 0:död
-                      'evasion': 1
+                      'evasion': 1,
                        'name': 'Player' #Implementera ett sätt för spelaren att få använda sitt namn?
+                       }
+            }
 
 combatPromptAttack = ""
 combatPromptCounter = ""
