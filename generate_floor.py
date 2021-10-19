@@ -1,6 +1,7 @@
 from random import randint
 import keyboard
 import os
+from time import sleep
 
 clear_console = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear') #för körning i kommandotolk
 
@@ -25,13 +26,15 @@ GRAPHICS={  'PLAYER':'@',
             'SHIELD':'H',
             'PIROGUE':'B'}
 
-
+combatPromptAttack = ""
+combatPromptCounter = ""
 floor = []
 level = 1
 entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
                       'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                       'life':2, #2: sköld, 1: ingen sköld, 0:död
                       'evasion': 1
+                       'name': 'Player' #Implementera ett sätt för spelaren att få använda sitt namn?
                        }
             #lägg till monster här
             }
@@ -53,6 +56,7 @@ def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är 
                                                 'room':room,
                                                 'life':life,
                                                 'evasion':evasion,
+                                                'name': 'Monster'
                                                 }
     place_entity(f'MONSTER_{str(monsterCount)}', entities[f'MONSTER_{str(monsterCount)}']['pos'])
 
@@ -61,8 +65,8 @@ def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är 
 def generate_monsters(quantity):
     for _ in range(quantity):
         rDiff = randint(1, 3)
-        rX = randint(1, SIDELENGTH-2)
-        rY = randint(1, SIDELENGTH-2)
+        rX = randint(2, SIDELENGTH-3)
+        rY = randint(2, SIDELENGTH-3)
         rRoom = randint(0,(len(floor)-1))
         generate_monster(rDiff,(rX,rY),rRoom)
 
@@ -243,7 +247,7 @@ def entity_action(entity, where):
         change_room(where)
         return False
     elif where == entities['PLAYER']['pos'] and not entity == 'PLAYER':
-        attack_entity(entity, entities['PLAYER']) #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
+        attack_entity(entities[entity], entities['PLAYER']) #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
         return False
     elif goalTile == GRAPHICS['ENEMY_1'] or goalTile == GRAPHICS['ENEMY_2'] or goalTile == GRAPHICS['ENEMY_3']:
         attack_entity(entities['PLAYER'], what_entity(entities[entity]['room'], where))
@@ -255,6 +259,10 @@ def attack_entity(attacker,defender):
     rHit = randint(0,10)
     if int(rHit-defender['evasion']) >= 5:
         defender['life'] -= 1
+        combatPromptAttack = f"{attacker['name']} attack and hit {defender['name']}"
+    elif int(rHit-defender['evasion']) < 5:
+        combatPromptAttack = ""
+    
     if defender['life'] >0:
         rCounterHit = randint(0,9)
         if int(rCounterHit-attacker['evasion']) >= 5:
@@ -319,7 +327,9 @@ def playerTurn():
                 playersTurn = False
         
         render_room(floor[entities['PLAYER']['room']]['tiles'])
-
+        combatPromptAttack = ""
+        combatPromptCounter = ""
+        sleep(0.1)
 
 #Testfunktioner
 def testing_create_doors(door):
