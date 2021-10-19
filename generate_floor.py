@@ -190,6 +190,8 @@ def place_entity(entity, where):
             graphics = GRAPHICS['PLAYER']
         elif entities['PLAYER']['life'] == 1:
             graphics = GRAPHICS['PLAYER_DAMAGED']
+        elif entities['PLAYER']['life'] == 0:
+            graphics = GRAPHICS['PLAYER_DEAD']
     else:
         diff = entities[entity]['life']
         if diff > 0:
@@ -246,7 +248,10 @@ def move_between_rooms(room, where):
 
 #Anropas när spelaren trycker på WASD eller när monster gör sitt drag. Beroende på vad som finns på rutan så händer olika saker,
 #t.ex. om rutan är tom förflyttas entiteten dit, om det finns en entitet där slår man den
-def entity_action(entity, where): 
+def entity_action(entity, where):
+    #if entities['PLAYER']['life'] == 0:
+        #cause = "dead"
+        #end_game(cause)
     tiles = floor[entities[entity]['room']]['tiles']
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     goalTile = floor[entities[entity]['room']]['tiles'][y][x]
@@ -348,7 +353,7 @@ def testing_create_doors(door):
     
 def testing_movement():
     generate_floor()
-    generate_monsters(2)
+    generate_monsters(5)
     playerTurn()
     
 testing_movement()
