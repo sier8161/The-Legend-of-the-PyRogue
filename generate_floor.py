@@ -9,7 +9,7 @@ SIDELENGTH = 15 # Kvadratiskt rum med sidlängd SIDELENGTH
 MIDDLE = int(SIDELENGTH/2)
 GRAPHICS={  'PLAYER':'@',
             'PLAYER_DAMAGED':'a',
-            'PLAYER_DEAD':'†',
+            'PLAYER_DEAD':'∩',
             'TL_WALL':'╔', #TL står för top-left
             'TR_WALL':'╗', #TR står för top-right
             'BL_WALL':'╚', #BL står för bottom-left
@@ -27,33 +27,20 @@ GRAPHICS={  'PLAYER':'@',
             'SHIELD':'H',
             'PIROGUE':'B'}
 
+entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
+                    'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
+                    'life':2, #2: sköld, 1: ingen sköld, 0:död
+                    'evasion': 1,
+                    'name': 'Player' #Implementera ett sätt för spelaren att få använda sitt namn?
+                    }
+            #MONSTER_1 , MONSTER_2, osv till MONSTER_{monsterCount} kommer finnas i denna lista efter att de genererats
+            }
 
 combatPromptAttack = ""
 combatPromptCounter = ""
 floor = []
 level = 1
-
-entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
-                      'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
-                      'life':2, #2: sköld, 1: ingen sköld, 0:död
-                      'evasion': 1,
-                       'name': 'Player' #Implementera ett sätt för spelaren att få använda sitt namn?
-                       }
-            }
-
-combatPromptAttack = ""
-combatPromptCounter = ""
-entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
-                      'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
-                      'life':2, #2: sköld, 1: ingen sköld, 0:död
-                      'evasion': 1,
-                      'name': 'Player'
-
-                       }
-            #lägg till monster här
-            }
-
-monsterCount = 0 #
+monsterCount = 0
 # generate_monster är en procedur som ändrar den globala dictionaryn entities för att lägga till ett monster.
 # Parametrar in till denna funktion; diff:integer med svårighetsgrad på monstret, room: integer för index på
 # rummet i floor-listan som den skall genereras i, och coords: tupel med integers för x och y-värden.
@@ -81,6 +68,8 @@ def generate_monsters(quantity):
         rDiff = randint(1, 3)
         rX = randint(2, SIDELENGTH-3)
         rY = randint(2, SIDELENGTH-3)
+        if (rX,rY) == (MIDDLE,MIDDLE): #SPECIALFALL om en fiende skulle renderas på samma ruta som spelaren spawnas på.
+            rX+=1 #Kanske hade varit ännu bättre att lägga till ett generellt fall så att det endast kan spawnas nya saker på 'EMPTY'-tiles.
         rRoom = randint(0,(len(floor)-1))
         generate_monster(rDiff,(rX,rY),rRoom)
 
@@ -120,8 +109,7 @@ def generate_room(coords): #returnerar ett dictionary som sparar data kring rumm
 #Possibilities: en lista bestående av alla möjliga nya placeringar som skapats från generate_floor och används för att veta vilka dörrar som inte ska finnas. 
 def needed_doors(room, possibilities):
     roomCoords = room['coordinates']
-    x = roomCoords[0]
-    y = roomCoords[1]
+    x, y = roomCoords
     for coords in possible_placements(roomCoords):
         if coords in possibilities:
             print()
@@ -156,8 +144,7 @@ def create_doors(room):
         
 #Sidoeffekt: tar bort allt som tidigare printats och printar rummet
 def render_room(tiles):
-    global combatPromptAttack
-    global combatPromptCounter
+    global combatPromptAttack, combatPromptCounter
     clear_console()
     for vertLine in tiles:
         for tile in vertLine:
@@ -166,21 +153,18 @@ def render_room(tiles):
     print(floor[entities['PLAYER']['room']]['coordinates'])
     print(combatPromptAttack)
     print(combatPromptCounter)
-    print(str(floor[entities['PLAYER']['room']]['coordinates'])+" room n: "+str(entities['PLAYER']['room']))
     combatPromptAttack = ""
     combatPromptCounter = ""
         
 #returnerar en lista av tuples där varje tuple är koordinater som ligger brevid ett bestämt rum
 def possible_placements(roomCoords):
-    x = roomCoords[0]
-    y = roomCoords[1]
+    x, y = roomCoords
     listy = [((x+1), y), ((x-1), y), (x, (y-1)), (x, (y+1))]
     return listy    
     
 #Skapar en lista (globalt) som representerar en floor datamässigt.
 def generate_floor():
-    #skapar första rummet vid 0,0
-    global floor
+    global floor #skapar första rummet vid 0,0
     floor = [generate_room((0,0))]
     existingRoomCoords= [(0,0)]
     possibilities = possible_placements((0,0)) #lista som lagrar alla möjliga koordinater där nästa rum kan placeras 
@@ -188,7 +172,7 @@ def generate_floor():
     for _ in range(nRooms):
         rng = randint(0, len(possibilities)-1)
         newRoomCoords = possibilities[rng]
-        print(f"Rum {_+2} koordinater: ", newRoomCoords) #rad för debug
+        print(f"Rum {_+2} koordinater: ", newRoomCoords) #rad för debug (kan också användas vid presentationen)
         floor.append(generate_room(newRoomCoords, ))
         for coords in possible_placements(newRoomCoords):
             if not coords in possibilities:
@@ -243,7 +227,7 @@ def update_entity(entity,where):
 
 #Flyttar en entitet till bestämda koordinater. Tar argumenten entity vilket är vilken entitet och where som är koordinaterna för vart den ska flyttas
 def move_entity(entity, where):
-    tiles = floor[entities[entity]['room']]['tiles'] #OBS! tog player som key till entities för att jag inte förväntar mig att någon ska använda funktionen i ett annat rum och ville göra det enkelt
+    tiles = floor[entities[entity]['room']]['tiles'] #OBS! tog player som key till move_entity('entity',_) för att jag inte förväntar mig att någon ska använda funktionen i ett annat rum och ville göra det enkelt
     delete_entity(entity)
     place_entity(entity, where)
     entities[entity]['pos'] = where
@@ -295,21 +279,19 @@ def entity_action(entity, where):
         return True
 
 def attack_entity(attacker,defender):
-    global combatPromptAttack
-    global combatPromptCounter
+    global combatPromptAttack, combatPromptCounter
     rHit = randint(0,10)
-                       
-    hitormiss = "misses"                   
+    hitOrMiss = "misses"
     if rHit-int(entities[defender]['evasion']) >= 5:
         entities[defender]['life'] -= 1
-        hitormiss = "damages"
-    combatPromptAttack = f"{entities[attacker]['name']} attacks and {hitormiss} {entities[defender]['name']}"
+        hitOrMiss = "hits"
+    combatPromptAttack = f"{entities[attacker]['name']} attacks and {hitOrMiss} {entities[defender]['name']}"
     
     if entities[defender]['life'] >0:
         rCounterHit = randint(0,9)
         if rCounterHit-int(entities[attacker]['evasion']) >= 5:
             entities[attacker]['life'] -= 1
-            combatPromptCounter = f"{entities[defender]['name']} successfully performs a counter-attack, damaging {entities[attacker]['name']}"
+            combatPromptCounter = f"{entities[defender]['name']} successfully performs a counter-attack, hitting {entities[attacker]['name']}"
     update_entity(attacker, entities[attacker]['pos'])
     update_entity(defender, entities[defender]['pos'])
             
@@ -317,9 +299,8 @@ def attack_entity(attacker,defender):
 #Tar argumentet coords vilket är koordinaterna 'where' som entity_action anropades med
 def change_room(coords):
     index = 0
-    roomCoords = floor[entities['PLAYER']['room']]['coordinates']
-    roomX = roomCoords[0]
-    roomY = roomCoords[1]
+    roomX, roomY = floor[entities['PLAYER']['room']]['coordinates']
+
     if coords == (MIDDLE, 0): #flytta norrut
         for room in floor:
             if room['coordinates'] == (roomX, roomY+1):
@@ -374,7 +355,7 @@ def playerTurn():
         render_room(floor[entities['PLAYER']['room']]['tiles'])
         combatPromptAttack = ""
         combatPromptCounter = ""
-        sleep(0.1)
+        sleep(0.07)
 
 #Testfunktioner
 def testing_create_doors(door):
