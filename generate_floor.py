@@ -1,6 +1,7 @@
 from random import randint
 import keyboard
 import os
+from time import sleep
 
 clear_console = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear') #för körning i kommandotolk
 
@@ -26,6 +27,9 @@ GRAPHICS={  'PLAYER':'@',
             'SHIELD':'H',
             'PIROGUE':'B'}
 
+
+combatPromptAttack = ""
+combatPromptCounter = ""
 floor = []
 level = 1
 
@@ -33,6 +37,16 @@ entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
                       'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                       'life':2, #2: sköld, 1: ingen sköld, 0:död
                       'evasion': 1
+                       'name': 'Player' #Implementera ett sätt för spelaren att få använda sitt namn?
+
+combatPromptAttack = ""
+combatPromptCounter = ""
+entities = {'PLAYER': {'pos':(MIDDLE, MIDDLE),
+                      'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
+                      'life':2, #2: sköld, 1: ingen sköld, 0:död
+                      'evasion': 1,
+                      'name': 'Player'
+
                        }
             #lägg till monster här
             }
@@ -54,6 +68,7 @@ def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är 
                                                 'room':room,
                                                 'life':life,
                                                 'evasion':evasion,
+                                                'name': 'Monster'
                                                 }
     place_entity(f'MONSTER_{str(monsterCount)}', entities[f'MONSTER_{str(monsterCount)}']['pos'])
 
@@ -62,8 +77,8 @@ def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är 
 def generate_monsters(quantity):
     for _ in range(quantity):
         rDiff = randint(1, 3)
-        rX = randint(1, SIDELENGTH-2)
-        rY = randint(1, SIDELENGTH-2)
+        rX = randint(2, SIDELENGTH-3)
+        rY = randint(2, SIDELENGTH-3)
         rRoom = randint(0,(len(floor)-1))
         generate_monster(rDiff,(rX,rY),rRoom)
 
@@ -139,12 +154,19 @@ def create_doors(room):
         
 #Sidoeffekt: tar bort allt som tidigare printats och printar rummet
 def render_room(tiles):
+    global combatPromptAttack
+    global combatPromptCounter
     clear_console()
     for vertLine in tiles:
         for tile in vertLine:
             print(tile, end="")
         print("\n", end="")
+    print(floor[entities['PLAYER']['room']]['coordinates'])
+    print(combatPromptAttack)
+    print(combatPromptCounter)
     print(str(floor[entities['PLAYER']['room']]['coordinates'])+" room n: "+str(entities['PLAYER']['room']))
+    combatPromptAttack = ""
+    combatPromptCounter = ""
         
 #returnerar en lista av tuples där varje tuple är koordinater som ligger brevid ett bestämt rum
 def possible_placements(roomCoords):
@@ -262,7 +284,7 @@ def entity_action(entity, where):
         change_room(where)
         return False
     elif where == entities['PLAYER']['pos'] and not entity == 'PLAYER':
-        attack_entity(entity, 'PLAYER') #OBS! OBS! OBS! Anropar en icke-existerande funktion som jag tänker göra senare, attack_entity(attacker, target)
+        attack_entity(entity, 'PLAYER')
         return False
     elif goalTile == GRAPHICS['ENEMY_1'] or goalTile == GRAPHICS['ENEMY_2'] or goalTile == GRAPHICS['ENEMY_3']:
         attack_entity('PLAYER', what_entity(entities[entity]['room'], where))
@@ -271,17 +293,24 @@ def entity_action(entity, where):
         return True
 
 def attack_entity(attacker,defender):
+    global combatPromptAttack
+    global combatPromptCounter
     rHit = randint(0,10)
+                       
+    hitormiss = "misses"                   
     if rHit-int(entities[defender]['evasion']) >= 5:
         entities[defender]['life'] -= 1
+        hitormiss = "damages"
+    combatPromptAttack = f"{entities[attacker]['name']} attacks and {hitormiss} {entities[defender]['name']}"
+    
     if entities[defender]['life'] >0:
         rCounterHit = randint(0,9)
         if rCounterHit-int(entities[attacker]['evasion']) >= 5:
             entities[attacker]['life'] -= 1
+            combatPromptCounter = f"{entities[defender]['name']} successfully performs a counter-attack, damaging {entities[attacker]['name']}"
     update_entity(attacker, entities[attacker]['pos'])
     update_entity(defender, entities[defender]['pos'])
             
-
 #Anropas när spelarens koordinater 'where' i entity_action är en dörr. Då avgör denna funktion vilket rum spelaren ska förflytta sig till.
 #Tar argumentet coords vilket är koordinaterna 'where' som entity_action anropades med
 def change_room(coords):
@@ -341,7 +370,9 @@ def playerTurn():
                 playersTurn = False
         
         render_room(floor[entities['PLAYER']['room']]['tiles'])
-
+        combatPromptAttack = ""
+        combatPromptCounter = ""
+        sleep(0.1)
 
 #Testfunktioner
 def testing_create_doors(door):
@@ -353,7 +384,7 @@ def testing_create_doors(door):
     
 def testing_movement():
     generate_floor()
-    generate_monsters(5)
+    generate_monsters(10)
     playerTurn()
     
 testing_movement()
