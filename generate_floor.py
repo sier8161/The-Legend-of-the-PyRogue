@@ -270,7 +270,9 @@ def entity_action(entity, where):
     tiles = floor[entities[entity]['room']]['tiles']
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     goalTile = floor[entities[entity]['room']]['tiles'][y][x]
-    if goalTile == GRAPHICS['EMPTY']: #om rutan är tom förflyttas entiteten dit
+    if where == entities[entity]['pos']:
+        pass
+    elif goalTile == GRAPHICS['EMPTY']: #om rutan är tom förflyttas entiteten dit
         move_entity(entity, where)
         return False #returnerar False som assignas till playerTurn för att visa att ett drag har genomförts och att spelarens runda är över
     elif goalTile == GRAPHICS['V_DOOR'] or goalTile == GRAPHICS['H_DOOR']:
@@ -398,6 +400,9 @@ def pathfinder(tiles, entity, target):
             return pos
         elif tiles[pos[1]][pos[0]] == GRAPHICS['EMPTY']:
             return pos
+        else:
+            return entities[entity]['pos']
+            
     
 #Testfunktioner
 def testing_create_doors(door):
