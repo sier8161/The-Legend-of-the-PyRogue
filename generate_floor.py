@@ -1,3 +1,4 @@
+#coding=utf-8
 from random import randint
 from random import shuffle
 import keyboard
@@ -37,7 +38,7 @@ entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
                     }
             #MONSTER_1 , MONSTER_2, osv till MONSTER_{monsterCount} kommer finnas i denna lista efter att de genererats
             }
-
+game_over = False
 prompt = ""
 floor = []
 level = 0
@@ -251,7 +252,9 @@ def place_entity(entity, where):
         elif entities['PLAYER']['life'] == 1:
             graphics = GRAPHICS['PLAYER_DAMAGED']
         elif entities['PLAYER']['life'] == 0:
+            global game_over
             graphics = GRAPHICS['PLAYER_DEAD']
+            game_over = True
     else:
         diff = entities[entity]['life']
         if diff > 0:
@@ -355,7 +358,7 @@ def attack_entity(attacker,defender):
     combat_prompt(attacker, defender, hitbool)
     
     if entities[defender]['life'] >0:
-        rCounterHit = randint(2,9)
+        rCounterHit = randint(0,6)
         if rCounterHit-int(entities[attacker]['evasion']) >= 5:
             entities[attacker]['life'] -= 1
             prompt += f"{entities[defender]['name']} successfully performs a counter-attack, hitting {entities[attacker]['name']}\n"
@@ -396,7 +399,7 @@ def change_room(coords):
 #Anropas för att ge spelaren möjlighet att ge inputs för att göra sitt drag. 
 def playerTurn():
     render_room(floor[entities['PLAYER']['room']]['tiles'])
-    while True:
+    while game_over == False:
         playersTurn = True
         while playersTurn == True:
             if keyboard.is_pressed('w'): # move up
@@ -423,12 +426,14 @@ def playerTurn():
         enemy_turn()
         render_room(floor[entities['PLAYER']['room']]['tiles']) # andra gången för att visa fiendens drag
         render_room(floor[entities['PLAYER']['room']]['tiles']) # tredje gången för att få en tom prompt
+    print("You died. Game over!")
+    quit()
 
 def enemy_turn():
     currentRoom = floor[entities['PLAYER']['room']]
     for e in list(entities)[1:]:
         if entities[e]['room'] == entities['PLAYER']['room'] and entities[e]['life'] != 0:
-            entity_action(e, pathfinder(currentRoom['tiles'], e, entities['PLAYER']['pos']))
+           entity_action(e, pathfinder(currentRoom['tiles'], e, entities['PLAYER']['pos']))
             
 
 #egengjord pathfinder
