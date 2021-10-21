@@ -37,8 +37,7 @@ entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
             #MONSTER_1 , MONSTER_2, osv till MONSTER_{monsterCount} kommer finnas i denna lista efter att de genererats
             }
 
-combatPromptAttack = ""
-combatPromptCounter = ""
+prompt = ""
 floor = []
 level = 1
 monsterCount = 0
@@ -145,7 +144,7 @@ def create_doors(room):
         
 #Sidoeffekt: tar bort allt som tidigare printats och printar rummet
 def render_room(tiles):
-    global combatPromptAttack, combatPromptCounter
+    global prompt
     clear_console()
     for vertLine in tiles:
         for tile in vertLine:
@@ -153,16 +152,10 @@ def render_room(tiles):
         print("\n", end="")
     print(floor[entities['PLAYER']['room']]['coordinates'])
     
-    if combatPromptAttack != "":
-        print(combatPromptAttack)
-        sleep(1)
-    
-    if combatPromptCounter != "":
-        print(combatPromptCounter)
-        sleep(1)
-    combatPromptAttack = ""
-    combatPromptCounter = ""
-        
+    print(prompt)
+    if prompt != "":
+        os.system("pause")
+    prompt = ""
 #returnerar en lista av tuples där varje tuple är koordinater som ligger brevid ett bestämt rum
 def possible_placements(roomCoords):
     x, y = roomCoords
@@ -288,19 +281,19 @@ def entity_action(entity, where):
         return True
 
 def attack_entity(attacker,defender):
-    global combatPromptAttack, combatPromptCounter
+    global prompt
     rHit = randint(0,10)
-    hitOrMiss = "misses"
+    hitbool = False
     if rHit-int(entities[defender]['evasion']) >= 5:
         entities[defender]['life'] -= 1
-        hitOrMiss = "hits"
-    combatPromptAttack = f"{entities[attacker]['name']} attacks and {hitOrMiss} {entities[defender]['name']}"
+        hitbool = True
+    combat_prompt(attacker, defender, hitbool)
     
     if entities[defender]['life'] >0:
-        rCounterHit = randint(0,9)
+        rCounterHit = randint(2,9)
         if rCounterHit-int(entities[attacker]['evasion']) >= 5:
             entities[attacker]['life'] -= 1
-            combatPromptCounter = f"{entities[defender]['name']} successfully performs a counter-attack, hitting {entities[attacker]['name']}"
+            prompt += f"{entities[defender]['name']} successfully performs a counter-attack, hitting {entities[attacker]['name']}\n"
     update_entity(attacker, entities[attacker]['pos'])
     update_entity(defender, entities[defender]['pos'])
             
@@ -364,7 +357,7 @@ def playerTurn():
         render_room(floor[entities['PLAYER']['room']]['tiles'])
         enemy_turn()
         render_room(floor[entities['PLAYER']['room']]['tiles'])
-        sleep(0.07)
+        render_room(floor[entities['PLAYER']['room']]['tiles']) # en tredje gång för att få en tom prompt
 
 def enemy_turn():
     currentRoom = floor[entities['PLAYER']['room']]
@@ -403,6 +396,46 @@ def pathfinder(tiles, entity, target):
         else:
             return entities[entity]['pos']
             
+            
+def combat_prompt(attacker, defender, hitbool):
+    global prompt
+    if hitbool == False:
+        rng = randint(0,2)
+        if rng == 0:
+            prompt += f"{entities[attacker]['name']} swings at {entities[defender]['name']} but it misses ...\n"
+        elif rng == 1:
+            prompt += f"{entities[attacker]['name']} attacks {entities[defender]['name']} but fails to do any damage...\n"
+        elif rng == 2:
+            prompt += f"{entities[attacker]['name']} tries to harm {entities[defender]['name']} but isn't successful...\n"
+            
+    if hitbool == True:
+        rng = randint(0,2)
+        if rng == 0:
+            prompt += f"{entities[attacker]['name']} successfully hits {entities[defender]['name']} and deals damage!\n"
+        elif rng == 1:
+            prompt += f"{entities[attacker]['name']} attacks {entities[defender]['name']} and it deals damage!\n"
+        elif rng == 2:
+            prompt += f"{entities[attacker]['name']} strikes {entities[defender]['name']}, successfully harming it!\n"
+    
+    deaths = []
+    if entities[attacker]['life'] <= 0: # Har med detta eftersom någon kan dö av en counterattack
+        deaths.append(attacker)
+    if entities[defender]['life'] <= 0: # Har med detta eftersom någon kan dö av en counterattack
+        deaths.append(defender)
+        
+    for dead_entity in deaths:
+        rng = randint(0,2)
+        if rng == 0:
+            prompt += f"{entities[dead_entity]['name']} lets out one last sigh before biting the bullet\n"
+        if rng == 1:
+            prompt += f"{entities[dead_entity]['name']} closes his eyes for the last time and enters an eternal sleep\n"
+        if rng == 2:
+            prompt += f"{entities[dead_entity]['name']} lies down on the floor and doesn't get up again\n"
+
+        
+
+
+
     
 #Testfunktioner
 def testing_create_doors(door):
