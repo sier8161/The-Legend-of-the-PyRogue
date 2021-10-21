@@ -2,6 +2,7 @@ from random import randint
 from random import shuffle
 import keyboard
 import os
+from animations import SPLASHFRAMES, MENUFRAMES
 from time import sleep
 
 clear_console = lambda: os.system('cls' if os.name in ('nt', 'dos') else 'clear') #för körning i kommandotolk
@@ -41,6 +42,8 @@ prompt = ""
 floor = []
 level = 0
 monsterCount = 0
+difficulty = 0
+
 # generate_monster är en procedur som ändrar den globala dictionaryn entities för att lägga till ett monster.
 # Parametrar in till denna funktion; diff:integer med svårighetsgrad på monstret, room: integer för index på
 # rummet i floor-listan som den skall genereras i, och coords: tupel med integers för x och y-värden.
@@ -511,5 +514,106 @@ def testing_movement():
     generate_floor()
     generate_monsters(2)
     playerTurn()
+
+def animatedSplashScreen():
+    for frame in SPLASHFRAMES:
+        clear_console()
+        print(frame)
+        sleep(1)
+    print('Press e to start')
+    keyboard.wait('e')
     
-next_floor()
+def mainMenu():
+    global difficulty
+    inMainMenu = True
+    inDiffMenu = False
+    menuState = 0
+    clear_console()
+    print(MENUFRAMES[menuState])
+    while inMainMenu:
+        sleep(0.1)
+        if keyboard.is_pressed('w'):
+            if menuState > 0:
+                menuState -= 1
+                clear_console()
+                print(MENUFRAMES[menuState])
+            else:
+                menuState = 2
+                clear_console()
+                print(MENUFRAMES[menuState])
+        if keyboard.is_pressed('s'):
+            if menuState < 2:
+                menuState += 1
+                clear_console()
+                print(MENUFRAMES[menuState])
+            else:
+                menuState = 0
+                clear_console()
+                print(MENUFRAMES[menuState])
+        if keyboard.is_pressed('e'):
+            if menuState == 1:
+                inDiffMenu = True
+                menuState = 3
+                clear_console()
+                print(MENUFRAMES[menuState])
+                while inDiffMenu:
+                    sleep(0.1)
+                    if keyboard.is_pressed('w'):
+                        if menuState > 3:
+                            menuState -= 1
+                            clear_console()
+                            print(MENUFRAMES[menuState])
+                        else:
+                            menuState = 5
+                            clear_console()
+                            print(MENUFRAMES[menuState])
+                    if keyboard.is_pressed('s'):
+                        if menuState < 5:
+                            menuState += 1
+                            clear_console()
+                            print(MENUFRAMES[menuState])
+                        else:
+                            menuState = 3
+                            clear_console()
+                            print(MENUFRAMES[menuState])
+                    if keyboard.is_pressed('e'):
+                        if menuState == 3:   #Easy
+                            difficulty = 1
+                        elif menuState == 4: #Veteran
+                            difficulty = 2
+                        else:                #I like to die
+                            difficulty = 3
+                        menuState = 1
+                        inDiffMenu = False
+                        clear_console()
+                        print(MENUFRAMES[menuState])
+            elif menuState == 2:
+                inHelp = True
+                menuState = 6
+                clear_console()
+                print(MENUFRAMES[menuState])
+                while inHelp:
+                    sleep(0.1)
+                    if keyboard.is_pressed('a') or keyboard.is_pressed('d'):
+                        if menuState < 7:
+                            menuState += 1
+                            clear_console()
+                            print(MENUFRAMES[menuState])
+                        else:
+                            menuState = 6
+                            clear_console()
+                            print(MENUFRAMES[menuState])
+                    if keyboard.is_pressed('e'):
+                        menuState = 1
+                        inHelp = False
+                        clear_console()
+                        print(MENUFRAMES[menuState])
+            else:
+                inMainMenu = False
+
+def main():
+    animatedSplashScreen()
+    mainMenu()
+    next_floor()
+    
+main()
