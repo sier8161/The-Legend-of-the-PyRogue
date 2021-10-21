@@ -26,7 +26,7 @@ GRAPHICS={  'PLAYER':'@',
             'ENEMY_1':'1',
             'ENEMY_2':'2',
             'ENEMY_3':'3',
-            'ENEMY_SLEEPING':'Z',
+            'ENEMY_SLEEPING':'z',
             'SHIELD':'H',
             'PIROGUE':'B'}
 
@@ -43,7 +43,7 @@ prompt = ""
 floor = []
 level = 0
 monsterCount = 0
-difficulty = 0
+difficulty = 2
 
 # generate_monster är en procedur som ändrar den globala dictionaryn entities för att lägga till ett monster.
 # Parametrar in till denna funktion; diff:integer med svårighetsgrad på monstret, room: integer för index på
@@ -175,8 +175,7 @@ def possible_placements(roomCoords):
     return listy    
     
 def nearby_rooms(roomCoords, n): #returnerar en lista med alla rum som ligger max n steg från ett givet rums koordinater, anropas i generate_floor
-    x = roomCoords[0]
-    y = roomCoords[1]
+    x,y = roomCoords
     nearbyRooms = [roomCoords]
     for i in range(1, n+1):
         for corners in [(n,n) , (n,-n), (-n,n), (-n,-n)]: #lägger till hörnen
@@ -582,9 +581,9 @@ def mainMenu():
                             clear_console()
                             print(MENUFRAMES[menuState])
                     if keyboard.is_pressed('e'):
-                        if menuState == 3:   #Easy
+                        if menuState == 3:   #Beginner
                             difficulty = 1
-                        elif menuState == 4: #Veteran
+                        elif menuState == 4: #Default
                             difficulty = 2
                         else:                #I like to die
                             difficulty = 3
