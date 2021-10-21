@@ -20,7 +20,7 @@ GRAPHICS={  'PLAYER':'@',
             'H_DOOR': '─',
             'V_DOOR': '│',
             'EMPTY':' ',
-            'NEXT_FLOOR':'x',
+            'NEXT_FLOOR':'^',
             'ENEMY_1':'1',
             'ENEMY_2':'2',
             'ENEMY_3':'3',
@@ -39,7 +39,7 @@ entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
 
 prompt = ""
 floor = []
-level = 1
+level = 0
 monsterCount = 0
 # generate_monster är en procedur som ändrar den globala dictionaryn entities för att lägga till ett monster.
 # Parametrar in till denna funktion; diff:integer med svårighetsgrad på monstret, room: integer för index på
@@ -76,6 +76,8 @@ def generate_monsters(quantity):
 #Denna funktion returnerar ett dictionary som representerar ett rum datamässigt. 
 #Argument: coords: Avgör vilka koordinater som rummet har i nivån (floor).
 #Anropas i funktionen generate_floor.
+        
+
 def generate_room(coords): #returnerar ett dictionary som sparar data kring rummet. Bl.a tiles, koordinater och om dörrar finns eller inte.
     tiles = []
     for vertLine in range(SIDELENGTH):
@@ -151,6 +153,7 @@ def render_room(tiles):
             print(tile, end="")
         print("\n", end="")
     print(floor[entities['PLAYER']['room']]['coordinates'])
+    print(f"Floor: {level}")
     
     print(prompt)
     if prompt != "":
@@ -161,6 +164,18 @@ def possible_placements(roomCoords):
     x, y = roomCoords
     listy = [((x+1), y), ((x-1), y), (x, (y-1)), (x, (y+1))]
     return listy    
+    
+def nearby_rooms(roomCoords, n): #returnerar en lista med alla rum som ligger max n steg från ett givet rums koordinater, anropas i generate_floor
+    x = roomCoords[0]
+    y = roomCoords[1]
+    nearbyRooms = [roomCoords]
+    for i in range(1, n+1):
+        for corners in [(n,n) , (n,-n), (-n,n), (-n,-n)]: #lägger till hörnen
+            nearbyRooms.append((corners[0] + x, corners[1] + y))
+        for coord in range(-(n-1), n):
+             for coords in [(n, coord), (-n, coord), (coord, n), (coord, -n)]: #lägger till sidorna
+                nearbyRooms.append((coords[0] + x, coords[1] + y))
+    return nearbyRooms
     
 #Skapar en lista (globalt) som representerar en floor datamässigt.
 def generate_floor():
@@ -183,7 +198,36 @@ def generate_floor():
         needed_doors(room, possibilities)
         create_doors(room)
     entities['PLAYER']['room'] = randint(0, nRooms) #slumpar vilket rum spelaren börjar i
-
+    
+    #Denna del av koden skapar en tile i ett rum som tar en till nästa floor och som är placerad successivt längre bort från spelaren desto fler floors den klarar
+    validRoomCoords =[]
+    allRoomCoords = []
+    i = 0
+    
+        
+    while validRoomCoords == []: #Om inga rum är kvar på listan, anropa nearby_rooms igen med level-n
+        for room in floor:   #Lägger till alla rums koordinater i en lista
+            allRoomCoords.append(room['coordinates'])
+            
+        excludedRooms = nearby_rooms(floor[entities['PLAYER']['room']]['coordinates'], level-i) #nearby_rooms returnerar en lista med alla rum som är max n steg (inklusive diagonalt) från ursprungsrummet
+               
+        for roomCoords in excludedRooms: #Tar bort alla rum som är exkluderade från listan med alla rums koordinater
+            if roomCoords in allRoomCoords:
+                allRoomCoords.remove(roomCoords)
+        
+        for roomCoords in allRoomCoords: #Lägger till de resterande rummen som blev kvar i listan med giltiga rum
+            validRoomCoords.append(roomCoords)
+        
+        i += 1
+    
+    #Slumpar en av koordinaterna av de möjliga som finns till rummet där man tar sig till nästa floor 
+    nextFloorRoomCoords = validRoomCoords[randint(0, len(validRoomCoords)-1)]
+    
+    for room in floor:
+        if room['coordinates'] == nextFloorRoomCoords:
+            nextFloorRoom = room
+    nextFloorRoom['tiles'][MIDDLE][MIDDLE] = GRAPHICS['NEXT_FLOOR']
+    
     place_entity('PLAYER', entities['PLAYER']['pos'])
 
 #Här under finns en del funktioner som interagerar med tiles i rum
@@ -253,6 +297,14 @@ def move_between_rooms(room, where):
     entities['PLAYER']['room'] = floor.index(room)
     place_entity('PLAYER', where)
     entities['PLAYER']['pos'] = where
+    
+def next_floor():
+    global level
+    level += 1
+    floor = generate_floor()
+    generate_monsters(2**level)
+    playerTurn()
+        
 
 #Anropas när spelaren trycker på WASD eller när monster gör sitt drag. Beroende på vad som finns på rutan så händer olika saker,
 #t.ex. om rutan är tom förflyttas entiteten dit, om det finns en entitet där slår man den
@@ -277,6 +329,11 @@ def entity_action(entity, where):
     elif goalTile == GRAPHICS['ENEMY_1'] or goalTile == GRAPHICS['ENEMY_2'] or goalTile == GRAPHICS['ENEMY_3']:
         attack_entity('PLAYER', what_entity(entities[entity]['room'], where))
         return False
+    elif goalTile == GRAPHICS['NEXT_FLOOR']:
+        if entity == 'PLAYER':
+            next_floor()
+        else:
+            pass
     else:
         return True
 
@@ -354,10 +411,10 @@ def playerTurn():
                 pass
                 playersTurn = False
         
-        render_room(floor[entities['PLAYER']['room']]['tiles'])
+        render_room(floor[entities['PLAYER']['room']]['tiles']) # Första gången för att visa spelarens drag
         enemy_turn()
-        render_room(floor[entities['PLAYER']['room']]['tiles'])
-        render_room(floor[entities['PLAYER']['room']]['tiles']) # en tredje gång för att få en tom prompt
+        render_room(floor[entities['PLAYER']['room']]['tiles']) # andra gången för att visa fiendens drag
+        render_room(floor[entities['PLAYER']['room']]['tiles']) # tredje gången för att få en tom prompt
 
 def enemy_turn():
     currentRoom = floor[entities['PLAYER']['room']]
@@ -447,7 +504,7 @@ def testing_create_doors(door):
     
 def testing_movement():
     generate_floor()
-    generate_monsters(10)
+    generate_monsters(2)
     playerTurn()
     
-testing_movement()
+next_floor()
