@@ -157,7 +157,12 @@ def render_room(tiles):
     
     print(prompt)
     if prompt != "":
-        os.system("pause")
+        if os.name == 'nt':
+            os.system('pause')
+        else:
+            os.system('read -s -n 1 -p "Press any key to continue..."')
+        
+            
     prompt = ""
 #returnerar en lista av tuples där varje tuple är koordinater som ligger brevid ett bestämt rum
 def possible_placements(roomCoords):
