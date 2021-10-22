@@ -75,9 +75,9 @@ SPLASHFRAMES = ["""
 """]
 
 MENUFRAMES = ["""
-
-
-   MAIN MENU
+    LEGEND
+    OF THE
+    PYROGUE
 
     [Play]
     
@@ -90,9 +90,9 @@ Press E to pick
 
 """,
 """
-
-
-   MAIN MENU
+    LEGEND
+    OF THE
+    PYROGUE
 
      Play
     
@@ -105,9 +105,9 @@ Press E to pick
 
 """,
 """
-
-
-   MAIN MENU
+    LEGEND
+    OF THE
+    PYROGUE
 
      Play
     
@@ -177,7 +177,7 @@ to win the game
 Flip these pages
 with A and D,
 press E to exit
-[PAGE 1/2]
+[PAGE 1/3]
 """,
 """
     HELP
@@ -192,5 +192,20 @@ H = HP potion
 B = pirogue
 ^ = next floor
 │ or ─ = door
-[PAGE 2/2]
+[PAGE 2/3]
+""",
+"""
+    HELP
+╖ = key to next
+    floor
+
+
+
+
+
+
+
+
+
+[PAGE 3/3]
 """]

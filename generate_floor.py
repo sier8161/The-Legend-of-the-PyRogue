@@ -635,8 +635,8 @@ def mainMenu():
                 print(MENUFRAMES[menuState])
                 while inHelp:
                     sleep(0.1)
-                    if keyboard.is_pressed('a') or keyboard.is_pressed('d'):
-                        if menuState < 7:
+                    if keyboard.is_pressed('d'):
+                        if menuState < 8:
                             menuState += 1
                             clear_console()
                             print(MENUFRAMES[menuState])
@@ -644,6 +644,17 @@ def mainMenu():
                             menuState = 6
                             clear_console()
                             print(MENUFRAMES[menuState])
+                            
+                    if keyboard.is_pressed('a'):
+                        if menuState > 6:
+                            menuState -= 1
+                            clear_console()
+                            print(MENUFRAMES[menuState])
+                        else:
+                            menuState = 8
+                            clear_console()
+                            print(MENUFRAMES[menuState])
+                            
                     if keyboard.is_pressed('e'):
                         menuState = 1
                         inHelp = False
