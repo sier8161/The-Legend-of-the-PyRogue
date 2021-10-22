@@ -27,18 +27,23 @@ GRAPHICS={  'PLAYER':'@',
             'ENEMY_2':'2',
             'ENEMY_3':'3',
             'ENEMY_SLEEPING':'z',
-            'SHIELD':'H',
-            'PIROGUE':'B'}
+            'POTION':'H',
+            'PIROGUE':'B',
+            'KEY':'╖',}
 
 entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
                     'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                     'life':2, #2: sköld, 1: ingen sköld, 0:död
                     'evasion': 1,
-                    'name': 'Player' #Implementera ett sätt för spelaren att få använda sitt namn?
+                    'name':'Player'
                     }
             #MONSTER_1 , MONSTER_2, osv till MONSTER_{monsterCount} kommer finnas i denna lista efter att de genererats
             }
 game_over = False
+keyDropped = False
+keyFound = False
+pirogueDropped = False
+gameWon = False
 prompt = ""
 floor = []
 level = 0
@@ -259,7 +264,8 @@ def place_entity(entity, where):
         if diff > 0:
             graphics = GRAPHICS[f'ENEMY_{diff}']
         else:
-            graphics = GRAPHICS['EMPTY']
+            graphics = droppedItems()
+            
             del entities[entity]
         
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
@@ -314,11 +320,31 @@ def next_floor():
     floor = generate_floor()
     generate_monsters(2**level)
     playerTurn()
-        
+
+def droppedItems():
+    global pirogueDropped,keyDropped
+    diceRoll = randint(0,100)
+    if not keyDropped:
+        keyDropped = True
+        return GRAPHICS['KEY'] # 100% chans att droppa för första monstret man dödar
+    elif level >= 5 and diceRoll >= 100+(difficulty*10)-(level*7):
+        #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 25 32 39 46 53 60 (easy),
+        #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 15 22 29 36 43 50 (medium),
+        #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 5  12 19 26 33 40 (hard),
+        pirogueDropped = True
+        return GRAPHICS['PIROGUE']
+    elif diceRoll >= (25*difficulty)+(level*4):
+        #chans för potion att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 71 67 63 59 55 51 47 43 39 35 (easy),
+        #chans för potion att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 46 42 38 34 30 26 22 18 14 10 (medium),
+        #chans för potion att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 21 17 13 9  5  1  0  0  0  0  (hard),
+        return GRAPHICS['POTION']
+    else:
+        return GRAPHICS['EMPTY']
 
 #Anropas när spelaren trycker på WASD eller när monster gör sitt drag. Beroende på vad som finns på rutan så händer olika saker,
 #t.ex. om rutan är tom förflyttas entiteten dit, om det finns en entitet där slår man den
 def entity_action(entity, where):
+    global keyDropped,keyFound,pirogueDropped
     #if entities['PLAYER']['life'] == 0:
         #cause = "dead"
         #end_game(cause)
@@ -336,11 +362,27 @@ def entity_action(entity, where):
     elif where == entities['PLAYER']['pos'] and not entity == 'PLAYER':
         attack_entity(entity, 'PLAYER')
         return False
+    elif entity == 'PLAYER' and goalTile == GRAPHICS['KEY']:
+        keyFound = True
+        move_entity(entity, where)
+        return False
+    elif entity == 'PLAYER' and goalTile == GRAPHICS['POTION']:
+        if entities[entity]['life'] < 2:
+            entities[entity]['life'] += 1
+            update_entity(entity,entities[entity]['pos'])
+        move_entity(entity, where)
+        return False
+    elif entity == 'PLAYER' and goalTile == GRAPHICS['PIROGUE']:
+        gameWon = True
+        move_entity(entity, where)
+        return True
     elif goalTile == GRAPHICS['ENEMY_1'] or goalTile == GRAPHICS['ENEMY_2'] or goalTile == GRAPHICS['ENEMY_3']:
         attack_entity('PLAYER', what_entity(entities[entity]['room'], where))
         return False
     elif goalTile == GRAPHICS['NEXT_FLOOR']:
-        if entity == 'PLAYER':
+        if entity == 'PLAYER' and keyFound and not pirogueDropped:
+            keyFound = False
+            keyDropped = False
             next_floor()
         else:
             pass
@@ -389,9 +431,6 @@ def change_room(coords):
         for room in floor:
             if room['coordinates'] == (roomX, roomY-1):
                 move_between_rooms(room, (MIDDLE, 1))
-                
-    else:
-        print("The door is broken!")
     
         
         
@@ -437,7 +476,8 @@ def enemy_turn():
 
 #egengjord pathfinder
 
-#A* är overkill och kan inte avlusa det och eftersom entiteter inte kan röra sig diagonalt och fler steg i taget så är det enkelt att programmera en egen
+#A* är overkill och kan inte avlusa det och eftersom entiteter inte kan röra sig diagonalt eller
+#flera steg i taget så är det enkelt att programmera en egen
 def pathfinder(tiles, entity, target):
     eX, eY = entities[entity]['pos']
     targetX, targetY = target
@@ -455,7 +495,7 @@ def pathfinder(tiles, entity, target):
     if targetY > eY:
         directions.append('down')
         
-    shuffle(directions) #Gör detta så att movement ser bättre ut
+    shuffle(directions) #Detta gör så att movement ser bättre ut
     for possible_direction in directions:
         pos = direction[possible_direction]
         if pos == target:
@@ -482,7 +522,7 @@ def combat_prompt(attacker, defender, hitbool):
         if rng == 0:
             prompt += f"{entities[attacker]['name']} successfully hits {entities[defender]['name']} and deals damage!\n"
         elif rng == 1:
-            prompt += f"{entities[attacker]['name']} attacks {entities[defender]['name']} and it deals damage!\n"
+            prompt += f"{entities[attacker]['name']} attacks {entities[defender]['name']} and deals damage!\n"
         elif rng == 2:
             prompt += f"{entities[attacker]['name']} strikes {entities[defender]['name']}, successfully harming it!\n"
     
@@ -497,9 +537,9 @@ def combat_prompt(attacker, defender, hitbool):
         if rng == 0:
             prompt += f"{entities[dead_entity]['name']} lets out one last sigh before biting the bullet\n"
         if rng == 1:
-            prompt += f"{entities[dead_entity]['name']} closes his eyes for the last time and enters an eternal sleep\n"
+            prompt += f"{entities[dead_entity]['name']} closes its eyes for the last time and enters the eternal sleep\n"
         if rng == 2:
-            prompt += f"{entities[dead_entity]['name']} lies down on the floor and doesn't get up again\n"
+            prompt += f"{entities[dead_entity]['name']} lies down on the floor never to get up again\n"
 
         
 
@@ -557,7 +597,7 @@ def mainMenu():
         if keyboard.is_pressed('e'):
             if menuState == 1:
                 inDiffMenu = True
-                menuState = 3
+                menuState = 2+difficulty
                 clear_console()
                 print(MENUFRAMES[menuState])
                 while inDiffMenu:
@@ -616,7 +656,7 @@ def mainMenu():
                 inMainMenu = False
 
 def main():
-    animatedSplashScreen()
+    #animatedSplashScreen()
     mainMenu()
     next_floor()
     
