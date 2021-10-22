@@ -43,7 +43,7 @@ game_over = False
 keyDropped = False
 keyFound = False
 pirogueDropped = False
-gameWon = False
+game_won = False
 prompt = ""
 floor = []
 level = 0
@@ -73,13 +73,23 @@ def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är 
 #procedur som anropar generate_monster flertalet gånger för att skapa en mängd 'quantity' monster på slumpmässiga platser med slumpmässiga stats.
 #OBS! EJ KLAR då den skall vikta antal fiender mot svårighetsgrad osv för att balansera spelet, vi får titta på det senare.
 def generate_monsters(quantity):
-    for _ in range(quantity):
+    diffSum = level*difficulty*2
+    # diffSum easy:   lvl 1 2 3 4 5 6 7 8 9 10 = 2  4  6  8 10 12 14 16 18 20
+    # diffSum medium: lvl 1 2 3 4 5 6 7 8 9 10 = 4  8 12 16 20 24 28 32 36 40
+    # diffSum hard:   lvl 1 2 3 4 5 6 7 8 9 10 = 6 12 18 24 30 36 42 48 54 60
+    for _ in range(quantity+(difficulty*level)):
+        # monster easy:   lvl 1 2 3 4 5 6 7 8 9 10 = q+1  q+2  q+3  q+4  q+5  q+6  q+7  q+8  q+9  q+10
+        # monster medium: lvl 1 2 3 4 5 6 7 8 9 10 = q+2  q+4  q+6  q+8  q+10 q+12 q+14 q+16 q+18 q+20
+        # monster hard:   lvl 1 2 3 4 5 6 7 8 9 10 = q+3  q+6  q+9  q+12 q+15 q+18 q+21 q+24 q+27 q+30
         rDiff = randint(1, 3)
         rX = randint(2, SIDELENGTH-3)
         rY = randint(2, SIDELENGTH-3)
         if (rX,rY) == (MIDDLE,MIDDLE): #SPECIALFALL om en fiende skulle renderas på samma ruta som spelaren spawnas på.
             rX+=1 #Kanske hade varit ännu bättre att lägga till ett generellt fall så att det endast kan spawnas nya saker på 'EMPTY'-tiles.
         rRoom = randint(0,(len(floor)-1))
+        diffSum -= (rDiff-1)
+        if diffSum <= 0:
+            rDiff = 1
         generate_monster(rDiff,(rX,rY),rRoom)
 
 #Denna funktion returnerar ett dictionary som representerar ett rum datamässigt. 
@@ -318,7 +328,7 @@ def next_floor():
     global level
     level += 1
     floor = generate_floor()
-    generate_monsters(2**level)
+    generate_monsters(3)
     playerTurn()
 
 def droppedItems():
@@ -344,7 +354,7 @@ def droppedItems():
 #Anropas när spelaren trycker på WASD eller när monster gör sitt drag. Beroende på vad som finns på rutan så händer olika saker,
 #t.ex. om rutan är tom förflyttas entiteten dit, om det finns en entitet där slår man den
 def entity_action(entity, where):
-    global keyDropped,keyFound,pirogueDropped
+    global keyDropped,keyFound,pirogueDropped,game_won
     #if entities['PLAYER']['life'] == 0:
         #cause = "dead"
         #end_game(cause)
@@ -373,7 +383,7 @@ def entity_action(entity, where):
         move_entity(entity, where)
         return False
     elif entity == 'PLAYER' and goalTile == GRAPHICS['PIROGUE']:
-        gameWon = True
+        game_won = True
         move_entity(entity, where)
         return True
     elif goalTile == GRAPHICS['ENEMY_1'] or goalTile == GRAPHICS['ENEMY_2'] or goalTile == GRAPHICS['ENEMY_3']:
@@ -393,14 +403,14 @@ def attack_entity(attacker,defender):
     global prompt
     rHit = randint(0,10)
     hitbool = False
-    if rHit-int(entities[defender]['evasion']) >= 5:
+    if rHit-int(entities[defender]['evasion']) >= 3+difficulty:
         entities[defender]['life'] -= 1
         hitbool = True
     combat_prompt(attacker, defender, hitbool)
     
     if entities[defender]['life'] >0:
         rCounterHit = randint(0,6)
-        if rCounterHit-int(entities[attacker]['evasion']) >= 5:
+        if rCounterHit-int(entities[attacker]['evasion']) >= 3+difficulty:
             entities[attacker]['life'] -= 1
             prompt += f"{entities[defender]['name']} successfully performs a counter-attack, hitting {entities[attacker]['name']}\n"
     update_entity(attacker, entities[attacker]['pos'])
@@ -540,25 +550,7 @@ def combat_prompt(attacker, defender, hitbool):
             prompt += f"{entities[dead_entity]['name']} closes its eyes for the last time and enters the eternal sleep\n"
         if rng == 2:
             prompt += f"{entities[dead_entity]['name']} lies down on the floor never to get up again\n"
-
         
-
-
-
-    
-#Testfunktioner
-def testing_create_doors(door):
-    testroom = generate_room((0,0))
-    render_room(testroom)
-    testroom['doors'][door] = True
-    create_doors(testroom)
-    render_room(testroom)
-    
-def testing_movement():
-    generate_floor()
-    generate_monsters(2)
-    playerTurn()
-
 def animatedSplashScreen():
     for frame in SPLASHFRAMES:
         clear_console()
@@ -654,6 +646,19 @@ def mainMenu():
                         print(MENUFRAMES[menuState])
             else:
                 inMainMenu = False
+    
+#Testfunktioner
+def testing_create_doors(door):
+    testroom = generate_room((0,0))
+    render_room(testroom)
+    testroom['doors'][door] = True
+    create_doors(testroom)
+    render_room(testroom)
+    
+def testing_movement():
+    generate_floor()
+    generate_monsters(2)
+    playerTurn()
 
 def main():
     #animatedSplashScreen()
