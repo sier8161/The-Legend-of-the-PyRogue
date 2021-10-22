@@ -77,8 +77,9 @@ def generate_monsters(quantity):
     # diffSum easy:   lvl 1 2 3 4 5 6 7 8 9 10 = 2  4  6  8 10 12 14 16 18 20
     # diffSum medium: lvl 1 2 3 4 5 6 7 8 9 10 = 4  8 12 16 20 24 28 32 36 40
     # diffSum hard:   lvl 1 2 3 4 5 6 7 8 9 10 = 6 12 18 24 30 36 42 48 54 60
+    # en 2a 'kostar' 1 från diffsum, en 3a kostar 2.
     for _ in range(quantity+(difficulty*level)):
-        # monster easy:   lvl 1 2 3 4 5 6 7 8 9 10 = q+1  q+2  q+3  q+4  q+5  q+6  q+7  q+8  q+9  q+10
+        # monster easy:   lvl 1 2 3 4 5 6 7 8 9 10 = q+1  q+2  q+3  q+4  q+5  q+6  q+7  q+8  q+9  q+10 q=4
         # monster medium: lvl 1 2 3 4 5 6 7 8 9 10 = q+2  q+4  q+6  q+8  q+10 q+12 q+14 q+16 q+18 q+20
         # monster hard:   lvl 1 2 3 4 5 6 7 8 9 10 = q+3  q+6  q+9  q+12 q+15 q+18 q+21 q+24 q+27 q+30
         rDiff = randint(1, 3)
@@ -207,6 +208,7 @@ def generate_floor():
     existingRoomCoords= [(0,0)]
     possibilities = possible_placements((0,0)) #lista som lagrar alla möjliga koordinater där nästa rum kan placeras 
     nRooms = 2**(level-1) + 5 #Antalet rum bestäms av parametern level
+    # lvl 1 2 3 4 5 6 7 8 9 10 = 6 7 9 13 21 37 69 133 261 517 rum
     for _ in range(nRooms):
         rng = randint(0, len(possibilities)-1)
         newRoomCoords = possibilities[rng]
@@ -374,6 +376,9 @@ def entity_action(entity, where):
         return False
     elif entity == 'PLAYER' and goalTile == GRAPHICS['KEY']:
         keyFound = True
+        if entities[entity]['life'] < 2:
+            entities[entity]['life'] += 1
+            update_entity(entity,entities[entity]['pos'])
         move_entity(entity, where)
         return False
     elif entity == 'PLAYER' and goalTile == GRAPHICS['POTION']:
