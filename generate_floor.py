@@ -212,7 +212,7 @@ def generate_floor():
     for _ in range(nRooms):
         rng = randint(0, len(possibilities)-1)
         newRoomCoords = possibilities[rng]
-        print(f"Rum {_+2} koordinater: ", newRoomCoords) #rad för debug (kan också användas vid presentationen)
+        #print(f"Rum {_+2} koordinater: ", newRoomCoords) #rad för debug (kan också användas vid presentationen)
         floor.append(generate_room(newRoomCoords, ))
         for coords in possible_placements(newRoomCoords):
             if not coords in possibilities:
@@ -676,10 +676,13 @@ def testing_movement():
     generate_monsters(2)
     playerTurn()
 
+
+#Testar hur många matcher som vinns under de bästa förhållanden för spelarna, dvs hen hittar det monster med minst liv, dödar den och tar sig till nästa nivå omdelebart tills hen är död eller hittat pirogen.
 def testing_difficulty():
     global level
     global floor
     global difficulty
+    global pirogueDropped
     wins = 0
     losses = 0
     totalGames = input("How many games do you want to emulate?")
@@ -689,8 +692,9 @@ def testing_difficulty():
         floor = []
         gameOver = False
         entities['PLAYER']['life'] = 2
+        pirogueDropped = False
         while entities['PLAYER']['life'] > 0 and gameOver == False:
-            if entities['PLAYER']['life'] == 1:
+            if entities['PLAYER']['life'] == 1 and difficulty != 3:
                 entities['PLAYER']['life'] = 2
             level += 1
             generate_floor()
@@ -730,6 +734,9 @@ def testing_difficulty():
     print(f"Total games: {totalGames}")
     print(f"Wins: {wins}")
     print(f"Losses: {losses}")
+    savedata = open("difficulty_test_data.txt", 'a')
+    savedata.write(f"Total games: {totalGames}, Difficulty: {difficulty}, Wins: {wins}, Losses: {losses}\n")
+    savedata.close
                 
                 
                 
