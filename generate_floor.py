@@ -278,7 +278,7 @@ def place_entity(entity, where):
         else:
             graphics = droppedItems()
             
-            del entities[entity]
+            #del entities[entity]
         
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     yaxis = tiles[y]
@@ -676,9 +676,78 @@ def testing_movement():
     generate_monsters(2)
     playerTurn()
 
+def testing_difficulty():
+    global level
+    global floor
+    global difficulty
+    wins = 0
+    losses = 0
+    totalGames = input("How many games do you want to emulate?")
+    difficulty = int(input("What difficulty? (1-3)"))
+    for _ in range(int(totalGames)):
+        level = 0
+        floor = []
+        gameOver = False
+        entities['PLAYER']['life'] = 2
+        while entities['PLAYER']['life'] > 0 and gameOver == False:
+            if entities['PLAYER']['life'] == 1:
+                entities['PLAYER']['life'] = 2
+            level += 1
+            generate_floor()
+            generate_monsters(3)
+            
+            
+            
+            monster = ""
+            monsterFound = False
+            i = 0
+            while monsterFound == False:
+                for e in entities:
+                    if entities[e]['life'] == 1+i and e != 'PLAYER':
+                        monster = e
+                if monster != "":
+                    monsterFound = True
+                else:
+                    i +=1
+                    
+                
+                    
+            while entities[monster]['life'] > 0 and entities['PLAYER']['life'] > 0:
+                if entities[monster]['life'] > 0 and entities['PLAYER']['life'] > 0:
+                    attack_entity('PLAYER', monster)
+                if entities[monster]['life'] > 0 and entities['PLAYER']['life'] > 0:
+                    attack_entity(monster, 'PLAYER')
+            
+            if entities['PLAYER']['life'] == 0:
+                gameOver = True
+                losses +=1
+                
+            elif pirogueDropped == True:
+                wins += 1
+                gameOver = True
+                
+                
+    print(f"Total games: {totalGames}")
+    print(f"Wins: {wins}")
+    print(f"Losses: {losses}")
+                
+                
+                
+            
+def next_floor():
+    global level
+    level += 1
+    floor = generate_floor()
+    generate_monsters(3)
+    playerTurn()
+            
+            
+
 def main():
     #animatedSplashScreen()
     mainMenu()
     next_floor()
     
-main()
+#main()
+
+testing_difficulty()
