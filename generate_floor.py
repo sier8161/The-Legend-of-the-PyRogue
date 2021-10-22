@@ -376,7 +376,7 @@ def entity_action(entity, where):
         return False
     elif entity == 'PLAYER' and goalTile == GRAPHICS['KEY']:
         keyFound = True
-        if entities[entity]['life'] < 2:
+        if entities[entity]['life'] < 2 and difficulty < 3: #om difficulty inte är hard så får man liv av nyckeln
             entities[entity]['life'] += 1
             update_entity(entity,entities[entity]['pos'])
         move_entity(entity, where)
