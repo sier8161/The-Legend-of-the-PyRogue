@@ -37,7 +37,7 @@ entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
                     'evasion': 1,
                     'name':'Player'
                     }
-            #MONSTER_1 , MONSTER_2, osv till MONSTER_{monsterCount} kommer finnas i denna lista efter att de genererats
+            #MONSTER_1 , MONSTER_2, osv till MONSTER_{monstersAlive} kommer finnas i denna lista efter att de genererats
             }
 game_over = False
 keyDropped = False
@@ -47,41 +47,44 @@ game_won = False
 prompt = ""
 floor = []
 level = 0
-monsterCount = 0
+monstersAlive = 0
+maxMonstersAlive = 0
 difficulty = 2
 
 # generate_monster är en procedur som ändrar den globala dictionaryn entities för att lägga till ett monster.
 # Parametrar in till denna funktion; diff:integer med svårighetsgrad på monstret, room: integer för index på
 # rummet i floor-listan som den skall genereras i, och coords: tupel med integers för x och y-värden.
-# sidoeffekter: ändrar den globala dictionaryn entities för att lägga till ett monster, och ändrar globala variabeln monsterCount
+# sidoeffekter: ändrar den globala dictionaryn entities för att lägga till ett monster, och ändrar globala variabeln monstersAlive
 def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är ett index för listan floor där indexet motsvarar ett dictionary som är ett rum
-    global monsterCount
-    monsterCount += 1 #iom att vi ökar monstercount innan monstret skapas så kommer första monstret få 'entiteten' MONSTER_1
+    global monstersAlive
+    monstersAlive += 1 #iom att vi ökar monstercount innan monstret skapas så kommer första monstret få 'entiteten' MONSTER_1
     life = 0
     evasion = 0
     for _ in range(diff):
         life += 1 #temporära värden
         evasion += 0 #ändra dessa sedan när vi har funderat ut hur vi vill göra med liv och evasion
-    entities[f'MONSTER_{str(monsterCount)}'] = {'pos':where,
+    entities[f'MONSTER_{str(monstersAlive)}'] = {'pos':where,
                                                 'room':room,
                                                 'life':life,
                                                 'evasion':evasion,
                                                 'name': 'Monster'
                                                 }
-    place_entity(f'MONSTER_{str(monsterCount)}', entities[f'MONSTER_{str(monsterCount)}']['pos'])
+    place_entity(f'MONSTER_{str(monstersAlive)}', entities[f'MONSTER_{str(monstersAlive)}']['pos'])
 
 #procedur som anropar generate_monster flertalet gånger för att skapa en mängd 'quantity' monster på slumpmässiga platser med slumpmässiga stats.
 #OBS! EJ KLAR då den skall vikta antal fiender mot svårighetsgrad osv för att balansera spelet, vi får titta på det senare.
-def generate_monsters(quantity):
+def generate_monsters():
+    global maxMonstersAlive
+    maxMonstersAlive = 3+(difficulty*level)
     diffSum = level*difficulty*2
     # diffSum easy:   lvl 1 2 3 4 5 6 7 8 9 10 = 2  4  6  8 10 12 14 16 18 20
     # diffSum medium: lvl 1 2 3 4 5 6 7 8 9 10 = 4  8 12 16 20 24 28 32 36 40
     # diffSum hard:   lvl 1 2 3 4 5 6 7 8 9 10 = 6 12 18 24 30 36 42 48 54 60
     # en 2a 'kostar' 1 från diffsum, en 3a kostar 2.
-    for _ in range(quantity+(difficulty*level)):
-        # monster easy:   lvl 1 2 3 4 5 6 7 8 9 10 = q+1  q+2  q+3  q+4  q+5  q+6  q+7  q+8  q+9  q+10 q=4
-        # monster medium: lvl 1 2 3 4 5 6 7 8 9 10 = q+2  q+4  q+6  q+8  q+10 q+12 q+14 q+16 q+18 q+20
-        # monster hard:   lvl 1 2 3 4 5 6 7 8 9 10 = q+3  q+6  q+9  q+12 q+15 q+18 q+21 q+24 q+27 q+30
+    for _ in range(maxMonstersAlive):
+        # monster easy:   lvl 1 2 3 4 5 6 7 8 9 10 = 3+1  3+2  3+3  3+4  3+5  3+6  3+7  3+8  3+9  3+10 
+        # monster medium: lvl 1 2 3 4 5 6 7 8 9 10 = 3+2  3+4  3+6  3+8  3+10 3+12 3+14 3+16 3+18 3+20
+        # monster hard:   lvl 1 2 3 4 5 6 7 8 9 10 = 3+3  3+6  3+9  3+12 3+15 3+18 3+21 3+24 3+27 3+30
         rDiff = randint(1, 3)
         rX = randint(2, SIDELENGTH-3)
         rY = randint(2, SIDELENGTH-3)
@@ -96,8 +99,6 @@ def generate_monsters(quantity):
 #Denna funktion returnerar ett dictionary som representerar ett rum datamässigt. 
 #Argument: coords: Avgör vilka koordinater som rummet har i nivån (floor).
 #Anropas i funktionen generate_floor.
-        
-
 def generate_room(coords): #returnerar ett dictionary som sparar data kring rummet. Bl.a tiles, koordinater och om dörrar finns eller inte.
     tiles = []
     for vertLine in range(SIDELENGTH):
@@ -274,6 +275,7 @@ def place_entity(entity, where):
         if diff > 0:
             graphics = GRAPHICS[f'ENEMY_{diff}']
         else:
+            global monstersAlive -= 1
             graphics = droppedItems()
             
             del entities[entity]
@@ -326,24 +328,21 @@ def move_between_rooms(room, where):
     
 def next_floor():
     global level
-    global monsterCount
+    global monstersAlive
     level += 1
-    monsterCount = 0
+    monstersAlive = 0
     floor = generate_floor()
-    generate_monsters(3)
+    generate_monsters()
     playerTurn()
 
 def droppedItems():
     global pirogueDropped,keyDropped
     diceRoll = randint(0,100)
-    if not keyDropped and diceRoll >=(4*level)+(difficulty*10):
-        #chans för key att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 96, 92, 88, 84, 80, 76, 72, 68, 64, 60 (easy)
-        #chans för key att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 76, 72, 68, 64, 60, 56, 52, 48, 44, 40 (medium)
-        #chans för key att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 66, 62, 58, 54, 50, 46, 42, 38, 34, 30 (hard)
-        #råkade göra s
+    if not keyDropped and diceRoll >=(100/maxMonstersAlive)*monstersAlive:
+        #chans för key att droppa är nu baserad på antalet monster man dödat av totalen och ökar
         
         keyDropped = True
-        return GRAPHICS['KEY'] # 100% chans att droppa för första monstret man dödar
+        return GRAPHICS['KEY'] 
     elif level >= 5 and diceRoll >= 100+(difficulty*10)-(level*7):
         #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 25 32 39 46 53 60 (easy),
         #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 15 22 29 36 43 50 (medium),
