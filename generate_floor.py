@@ -130,10 +130,11 @@ def generate_room(coords): #returnerar ett dictionary som sparar data kring rumm
 #Sidoeffekten är att ett bestämt rums (dvs ett dictionary) booleska värden för om dörrar ska finnas ändras.
 #Argument: room: ett dictionary (som representerar ett rum) som man vill använda funktionen på.
 #Possibilities: en lista bestående av alla möjliga nya placeringar som skapats från generate_floor och används för att veta vilka dörrar som inte ska finnas. 
-def needed_doors(room, possibilities):
+def needed_doors(room):
     roomCoords = room['coordinates']
     x, y = roomCoords
-    for coords in possible_placements(roomCoords):
+    for existingRoom in floor:
+        coords = existingRoom['coordinates']
         if coords == (x-1,y):
             room['doors']['L'] = True
         elif coords == (x+1,y):
@@ -185,9 +186,9 @@ def render_room(tiles):
     prompt = ""
 #returnerar en lista av tuples där varje tuple är koordinater som ligger brevid ett bestämt rum
 def possible_placements(roomCoords):
-    x, y = roomCoords
-    listy = [((x+1), y), ((x-1), y), (x, (y-1)), (x, (y+1))]
-    return listy    
+    y, x = roomCoords
+    possibilities = [((y+1), x), ((y-1), x), (y, (x-1)), (y, (x+1))]
+    return possibilities 
     
 def nearby_rooms(roomCoords, n): #returnerar en lista med alla rum som ligger max n steg från ett givet rums koordinater, anropas i generate_floor
     x,y = roomCoords
@@ -211,15 +212,15 @@ def generate_floor():
     for _ in range(nRooms):
         rng = randint(0, len(possibilities)-1)
         newRoomCoords = possibilities[rng]
+        existingRoomCoords.append(possibilities.pop(rng))
         #print(f"Rum {_+2} koordinater: ", newRoomCoords) #rad för debug (kan också användas vid presentationen)
-        floor.append(generate_room(newRoomCoords, ))
+        floor.append(generate_room(newRoomCoords))
         for coords in possible_placements(newRoomCoords):
             if not coords in possibilities:
                     if not coords in existingRoomCoords:
                         possibilities.append(coords)
-        existingRoomCoords.append(possibilities.pop(possibilities.index(newRoomCoords)))
     for room in floor:
-        needed_doors(room, possibilities)
+        needed_doors(room)
         create_doors(room)
     entities['PLAYER']['room'] = randint(0, nRooms) #slumpar vilket rum spelaren börjar i
     
@@ -260,7 +261,7 @@ def generate_floor():
 #Argumentet entity är vilken entitet och where är koordinaterna i (x,y) form
 def place_entity(entity, where):
     tiles = floor[entities[entity]['room']]['tiles']
-    
+    graphics = GRAPHICS['PLAYER_DEAD']
     if entity == 'PLAYER':
         if entities['PLAYER']['life'] == 2:
             graphics = GRAPHICS['PLAYER']
@@ -271,19 +272,18 @@ def place_entity(entity, where):
             graphics = GRAPHICS['PLAYER_DEAD']
             game_over = True
     else:
-        diff = entities[entity]['life']
-        if diff > 0:
-            graphics = GRAPHICS[f'ENEMY_{diff}']
+        monsterLife = entities[entity]['life']
+        if monsterLife > 0:
+            graphics = GRAPHICS[f'ENEMY_{monsterLife}']
         else:
             global monstersAlive
             monstersAlive -= 1
             graphics = droppedItems()
-            
             del entities[entity]
         
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
-    yaxis = tiles[y]
-    yaxis[x] = graphics
+    
+    tiles[y][x] = graphics
     
 
 #Tar bort en entitet. Tar entity som argument vilket är den entitet som ska tas bort (ÄNDRAR ENDAST GRAFISK REPRESENTATION)
@@ -362,14 +362,12 @@ def droppedItems():
 #t.ex. om rutan är tom förflyttas entiteten dit, om det finns en entitet där slår man den
 def entity_action(entity, where):
     global keyDropped,keyFound,pirogueDropped,game_won
-    #if entities['PLAYER']['life'] == 0:
-        #cause = "dead"
-        #end_game(cause)
+    
     tiles = floor[entities[entity]['room']]['tiles']
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     goalTile = floor[entities[entity]['room']]['tiles'][y][x]
     if where == entities[entity]['pos']:
-        pass
+        return False
     elif goalTile == GRAPHICS['EMPTY']: #om rutan är tom förflyttas entiteten dit
         move_entity(entity, where)
         return False #returnerar False som assignas till playerTurn för att visa att ett drag har genomförts och att spelarens runda är över
@@ -403,11 +401,13 @@ def entity_action(entity, where):
         if entity == 'PLAYER' and keyFound and not pirogueDropped:
             keyFound = False
             keyDropped = False
+            move_entity(entity, where)
             next_floor()
+            return False
         else:
-            pass
+            return False
     else:
-        return True
+        return False
 
 def attack_entity(attacker,defender):
     global prompt
