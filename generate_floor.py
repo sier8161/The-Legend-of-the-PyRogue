@@ -275,7 +275,8 @@ def place_entity(entity, where):
         if diff > 0:
             graphics = GRAPHICS[f'ENEMY_{diff}']
         else:
-            global monstersAlive -= 1
+            global monstersAlive
+            monstersAlive -= 1
             graphics = droppedItems()
             
             del entities[entity]
@@ -777,6 +778,6 @@ def main():
     mainMenu()
     next_floor()
     
-#main()
+main()
 
-testing_difficulty()
+#testing_difficulty()
