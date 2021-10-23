@@ -678,7 +678,7 @@ def testing_create_doors(door):
     
 def testing_movement():
     generate_floor()
-    generate_monsters(2)
+    generate_monsters()
     playerTurn()
 
 
@@ -706,7 +706,7 @@ def testing_difficulty():
                 entities['PLAYER']['life'] = 2
             level += 1
             generate_floor()
-            generate_monsters(3)
+            generate_monsters()
             keyDropped = False
             print(f"Foor: {level}")
           
@@ -768,7 +768,7 @@ def next_floor():
     global level
     level += 1
     floor = generate_floor()
-    generate_monsters(3)
+    generate_monsters()
     playerTurn()
             
             
