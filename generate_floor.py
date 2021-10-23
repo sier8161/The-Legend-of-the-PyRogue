@@ -133,9 +133,7 @@ def needed_doors(room, possibilities):
     roomCoords = room['coordinates']
     x, y = roomCoords
     for coords in possible_placements(roomCoords):
-        if coords in possibilities:
-            print()
-        elif coords == (x-1,y):
+        if coords == (x-1,y):
             room['doors']['L'] = True
         elif coords == (x+1,y):
             room['doors']['R'] = True
@@ -278,7 +276,7 @@ def place_entity(entity, where):
         else:
             graphics = droppedItems()
             
-            #del entities[entity]
+            del entities[entity]
         
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     yaxis = tiles[y]
@@ -328,7 +326,9 @@ def move_between_rooms(room, where):
     
 def next_floor():
     global level
+    global monsterCount
     level += 1
+    monsterCount = 0
     floor = generate_floor()
     generate_monsters(3)
     playerTurn()
@@ -336,7 +336,12 @@ def next_floor():
 def droppedItems():
     global pirogueDropped,keyDropped
     diceRoll = randint(0,100)
-    if not keyDropped:
+    if not keyDropped and diceRoll >=(4*level)+(difficulty*10):
+        #chans för key att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 96, 92, 88, 84, 80, 76, 72, 68, 64, 60 (easy)
+        #chans för key att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 76, 72, 68, 64, 60, 56, 52, 48, 44, 40 (medium)
+        #chans för key att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 66, 62, 58, 54, 50, 46, 42, 38, 34, 30 (hard)
+        #råkade göra s
+        
         keyDropped = True
         return GRAPHICS['KEY'] # 100% chans att droppa för första monstret man dödar
     elif level >= 5 and diceRoll >= 100+(difficulty*10)-(level*7):
@@ -683,52 +688,70 @@ def testing_difficulty():
     global floor
     global difficulty
     global pirogueDropped
+    #global keyDropped
     wins = 0
     losses = 0
     totalGames = input("How many games do you want to emulate?")
     difficulty = int(input("What difficulty? (1-3)"))
     for _ in range(int(totalGames)):
+        print(f"Game {_}")
         level = 0
         floor = []
         gameOver = False
         entities['PLAYER']['life'] = 2
         pirogueDropped = False
-        while entities['PLAYER']['life'] > 0 and gameOver == False:
+        keyDropped = False
+        while entities['PLAYER']['life'] > 0 or gameOver == False:
             if entities['PLAYER']['life'] == 1 and difficulty != 3:
                 entities['PLAYER']['life'] = 2
             level += 1
             generate_floor()
             generate_monsters(3)
+            keyDropped = False
+            print(f"Foor: {level}")
+          
             
-            
-            
-            monster = ""
-            monsterFound = False
-            i = 0
-            while monsterFound == False:
-                for e in entities:
-                    if entities[e]['life'] == 1+i and e != 'PLAYER':
-                        monster = e
-                if monster != "":
-                    monsterFound = True
-                else:
-                    i +=1
+            while keyDropped == False:
+                monster = ""
+                monsterFound = False
+                i = 0
+                while monsterFound == False:
+                    for e in entities:
+                        print(e)
+                        if entities[e]['life'] == 1+i and e != 'PLAYER':
+                            monster = e
+                    if monster != "":
+                        monsterFound = True
+                        print(f"Battle against {e}")
+                    else:
+                        i +=1
                     
                 
                     
-            while entities[monster]['life'] > 0 and entities['PLAYER']['life'] > 0:
-                if entities[monster]['life'] > 0 and entities['PLAYER']['life'] > 0:
-                    attack_entity('PLAYER', monster)
-                if entities[monster]['life'] > 0 and entities['PLAYER']['life'] > 0:
-                    attack_entity(monster, 'PLAYER')
-            
-            if entities['PLAYER']['life'] == 0:
-                gameOver = True
-                losses +=1
+                while entities[monster]['life'] > 0 and entities['PLAYER']['life'] > 0:
+                    if entities['PLAYER']['life'] > 0:
+                        attack_entity('PLAYER', monster)
+                    if entities[monster]['life'] > 0:
+                        attack_entity(monster, 'PLAYER')
+                print("Battle is over!")
+                    
+                if entities['PLAYER']['life'] == 0:
+                    print("player died")
+                    gameOver = True
+                    losses +=1
+                    keyDropped = True #nyckeln har inte droppat men behöver bryta loopen
                 
-            elif pirogueDropped == True:
-                wins += 1
-                gameOver = True
+                elif pirogueDropped == True:
+                    print("player won")
+                    wins += 1
+                    gameOver = True
+                    keyDropped = True
+                    
+                
+                 
+                elif keyDropped == True:
+                    print("Key dropped!")
+                
                 
                 
     print(f"Total games: {totalGames}")
