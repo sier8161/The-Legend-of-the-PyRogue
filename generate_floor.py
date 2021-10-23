@@ -211,8 +211,10 @@ def generate_floor():
     floor = [generate_room((0,0))]
     existingRoomCoords= [(0,0)]
     possibilities = possible_placements((0,0)) #lista som lagrar alla möjliga koordinater där nästa rum kan placeras 
-    nRooms = 2**(level-1) + 5 #Antalet rum bestäms av parametern level
-    # lvl 1 2 3 4 5 6 7 8 9 10 = 6 7 9 13 21 37 69 133 261 517 rum
+    nRooms = difficulty*(level-1) + 5 #Antalet rum bestäms av level och difficulty
+    # lvl 1 2 3 4 5 6 7 8 9 10 = 5  6  7  8  9  10 11 12 13 rum
+    # lvl 1 2 3 4 5 6 7 8 9 10 = 5  7  9  11 13 15 17 19 21 rum
+    # lvl 1 2 3 4 5 6 7 8 9 10 = 5  8  11 14 17 20 23 26 29 rum
     for _ in range(nRooms):
         rng = randint(0, len(possibilities)-1)
         newRoomCoords = possibilities[rng]
@@ -370,8 +372,8 @@ def entity_action(entity, where):
     tiles = floor[entities[entity]['room']]['tiles']
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
     goalTile = floor[entities[entity]['room']]['tiles'][y][x]
-    if where == entities[entity]['pos']:
-        return False
+    if where == entities[entity]['pos']: #debugrad för att inte få en extra runda när man dött?
+        return True
     elif goalTile == GRAPHICS['EMPTY']: #om rutan är tom förflyttas entiteten dit
         move_entity(entity, where)
         return False #returnerar False som assignas till playerTurn för att visa att ett drag har genomförts och att spelarens runda är över
@@ -481,13 +483,12 @@ def playerTurn():
                                             (entities['PLAYER']['pos'][0] + 1, entities['PLAYER']['pos'][1]))
                 
             if keyboard.is_pressed('e'): #wait
-                pass
                 playersTurn = False
         
         render_room(floor[entities['PLAYER']['room']]['tiles']) # Första gången för att visa spelarens drag
         enemy_turn()
         render_room(floor[entities['PLAYER']['room']]['tiles']) # andra gången för att visa fiendens drag
-        render_room(floor[entities['PLAYER']['room']]['tiles']) # tredje gången för att få en tom prompt
+        # render_room(floor[entities['PLAYER']['room']]['tiles']) # tredje gången för att få en tom prompt
     print("You died. Game over!\n")
     print("Press e to go back to the main menu")
     keyboard.wait('e')
@@ -495,14 +496,14 @@ def playerTurn():
 def enemy_turn():
     currentRoom = floor[entities['PLAYER']['room']]
     for e in list(entities)[1:]:
-        if entities[e]['room'] == entities['PLAYER']['room'] and entities[e]['life'] != 0:
+        if entities[e]['room'] == entities['PLAYER']['room'] and entities[e]['life'] > 0:
            entity_action(e, pathfinder(currentRoom['tiles'], e, entities['PLAYER']['pos']))
             
 
 #egengjord pathfinder
 
-#A* är overkill och kan inte avlusa det och eftersom entiteter inte kan röra sig diagonalt eller
-#flera steg i taget så är det enkelt att programmera en egen
+#A* är overkill, kan inte avlusa det och eftersom entiteter inte kan röra sig diagonalt eller
+#flera steg i taget så är det enklare att programmera en egen pathfinder
 def pathfinder(tiles, entity, target):
     eX, eY = entities[entity]['pos']
     targetX, targetY = target
@@ -528,7 +529,22 @@ def pathfinder(tiles, entity, target):
         elif tiles[pos[1]][pos[0]] == GRAPHICS['EMPTY']:
             return pos
         else:
-            return entities[entity]['pos']
+            rPick = randint(0,1)
+            sideStep = (0,0)
+            if targetX == eX:
+                if rPick:
+                    sideStep = direction['left']
+                else:
+                    sideStep = direction['right']
+            if targetY == eY:
+                if rPick:
+                    sideStep = direction['up']
+                else:
+                    sideStep = direction['down']
+            if tiles[sideStep[1]][sideStep[0]] == GRAPHICS['EMPTY']:
+                return sideStep
+            else:
+                return (eX,eY)
             
             
 def combat_prompt(attacker, defender, hitbool):
@@ -578,7 +594,7 @@ def mainMenu():
     global difficulty
     inMainMenu = True
     inDiffMenu = False
-    menuState = 0
+    menuState = 2
     clear_console()
     print(MENUFRAMES[menuState])
     while inMainMenu:
@@ -781,9 +797,9 @@ def next_floor():
 def main():
     while 1:
         initGlobalVariables()
-        animatedSplashScreen()
+        #animatedSplashScreen()
         mainMenu()
-        entities['PLAYER']['evasion']= 10*(3-difficulty)
+        entities['PLAYER']['evasion']= 20*(4-difficulty)
         next_floor()
     
 main()
