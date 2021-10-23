@@ -35,7 +35,7 @@ entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
                     'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                     'life':2, #2: sköld, 1: ingen sköld, 0:död
                     'evasion': 1,
-                    'name':'Player'
+                    'name':'You'
                     }
             #MONSTER_1 , MONSTER_2, osv till MONSTER_{monstersAlive} kommer finnas i denna lista efter att de genererats
             }
