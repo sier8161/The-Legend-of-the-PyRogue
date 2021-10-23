@@ -31,25 +31,29 @@ GRAPHICS={  'PLAYER':'@',
             'PIROGUE':'B',
             'KEY':'╖',}
 
-entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
+def initGlobalVariables():
+    global game_over, keyDropped, keyFound, pirogueDropped, pirogueEaten, prompt
+    global floor, level, monstersAlive, maxMonstersAlive, difficulty, entities
+    game_over = False
+    keyDropped = False
+    keyFound = False
+    pirogueDropped = False
+    pirogueEaten = False
+    prompt = ""
+    floor = []
+    level = 0
+    monstersAlive = 0
+    maxMonstersAlive = 0
+    difficulty = 2
+    
+    entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
                     'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                     'life':2, #2: sköld, 1: ingen sköld, 0:död
-                    'evasion': 1,
-                    'name':'You'
+                    'evasion': 10,
+                    'name':'Player'
                     }
-            #MONSTER_1 , MONSTER_2, osv till MONSTER_{monstersAlive} kommer finnas i denna lista efter att de genererats
-            }
-game_over = False
-keyDropped = False
-keyFound = False
-pirogueDropped = False
-game_won = False
-prompt = ""
-floor = []
-level = 0
-monstersAlive = 0
-maxMonstersAlive = 0
-difficulty = 2
+                #MONSTER_1 , MONSTER_2, osv till MONSTER_{monstersAlive} kommer finnas i denna lista efter att de genererats
+                }
 
 # generate_monster är en procedur som ändrar den globala dictionaryn entities för att lägga till ett monster.
 # Parametrar in till denna funktion; diff:integer med svårighetsgrad på monstret, room: integer för index på
@@ -62,7 +66,7 @@ def generate_monster(diff,where,room): #OBS! Nyckel 'room' som entities har är 
     evasion = 0
     for _ in range(diff):
         life += 1 #temporära värden
-        evasion += 0 #ändra dessa sedan när vi har funderat ut hur vi vill göra med liv och evasion
+        evasion += 10 #ändra dessa sedan när vi har funderat ut hur vi vill göra med liv och evasion
     entities[f'MONSTER_{str(monstersAlive)}'] = {'pos':where,
                                                 'room':room,
                                                 'life':life,
@@ -172,7 +176,7 @@ def render_room(tiles):
         for tile in vertLine:
             print(tile, end="")
         print("\n", end="")
-    print(floor[entities['PLAYER']['room']]['coordinates'])
+    #print(floor[entities['PLAYER']['room']]['coordinates'])
     print(f"Floor: {level}")
     
     print(prompt)
@@ -339,7 +343,7 @@ def next_floor():
 def droppedItems():
     global pirogueDropped,keyDropped
     diceRoll = randint(0,100)
-    if not keyDropped and diceRoll >=(100/maxMonstersAlive)*monstersAlive:
+    if not keyDropped and diceRoll >=((100/maxMonstersAlive)*monstersAlive)-10*(4-difficulty):
         #chans för key att droppa är nu baserad på antalet monster man dödat av totalen och ökar
         
         keyDropped = True
@@ -361,7 +365,7 @@ def droppedItems():
 #Anropas när spelaren trycker på WASD eller när monster gör sitt drag. Beroende på vad som finns på rutan så händer olika saker,
 #t.ex. om rutan är tom förflyttas entiteten dit, om det finns en entitet där slår man den
 def entity_action(entity, where):
-    global keyDropped,keyFound,pirogueDropped,game_won
+    global keyDropped,keyFound,pirogueDropped,pirogueEaten
     
     tiles = floor[entities[entity]['room']]['tiles']
     x, y = where #då 'where' är en tupel blir detta en split av tupeln, enligt x, y = (x,y)
@@ -391,7 +395,7 @@ def entity_action(entity, where):
         move_entity(entity, where)
         return False
     elif entity == 'PLAYER' and goalTile == GRAPHICS['PIROGUE']:
-        game_won = True
+        pirogueEaten = True
         move_entity(entity, where)
         return True
     elif goalTile == GRAPHICS['ENEMY_1'] or goalTile == GRAPHICS['ENEMY_2'] or goalTile == GRAPHICS['ENEMY_3']:
@@ -411,16 +415,16 @@ def entity_action(entity, where):
 
 def attack_entity(attacker,defender):
     global prompt
-    rHit = randint(0,10)
+    rHit = randint(0,100)
     hitbool = False
-    if rHit-int(entities[defender]['evasion']) >= 3+difficulty:
+    if rHit-int(entities[defender]['evasion']) >= 15*difficulty:
         entities[defender]['life'] -= 1
         hitbool = True
     combat_prompt(attacker, defender, hitbool)
     
     if entities[defender]['life'] >0:
-        rCounterHit = randint(0,6)
-        if rCounterHit-int(entities[attacker]['evasion']) >= 3+difficulty:
+        rCounterHit = randint(0,100)
+        if rCounterHit-int(entities[attacker]['evasion']) >= 20*difficulty:
             entities[attacker]['life'] -= 1
             prompt += f"{entities[defender]['name']} successfully performs a counter-attack, hitting {entities[attacker]['name']}\n"
     update_entity(attacker, entities[attacker]['pos'])
@@ -484,8 +488,9 @@ def playerTurn():
         enemy_turn()
         render_room(floor[entities['PLAYER']['room']]['tiles']) # andra gången för att visa fiendens drag
         render_room(floor[entities['PLAYER']['room']]['tiles']) # tredje gången för att få en tom prompt
-    print("You died. Game over!")
-    quit()
+    print("You died. Game over!\n")
+    print("Press e to go back to the main menu")
+    keyboard.wait('e')
 
 def enemy_turn():
     currentRoom = floor[entities['PLAYER']['room']]
@@ -708,7 +713,7 @@ def testing_difficulty():
             generate_floor()
             generate_monsters()
             keyDropped = False
-            print(f"Foor: {level}")
+            print(f"Floor: {level}")
           
             
             while keyDropped == False:
@@ -774,9 +779,12 @@ def next_floor():
             
 
 def main():
-    #animatedSplashScreen()
-    mainMenu()
-    next_floor()
+    while 1:
+        initGlobalVariables()
+        animatedSplashScreen()
+        mainMenu()
+        entities['PLAYER']['evasion']= 10*(3-difficulty)
+        next_floor()
     
 main()
 
