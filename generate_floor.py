@@ -49,7 +49,7 @@ def initGlobalVariables():
     entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
                     'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                     'life':2, #2: sköld, 1: ingen sköld, 0:död
-                    'evasion': 20, #sätts efter mainMenu till (4-difficulty)*10 (easy = 30, normal = 20, hard = 10)
+                    'evasion': 20, #sätts efter mainMenu till (4-difficulty)*10 (beginner = 30, normal = 20, ILTD = 10)
                     'name':'Player'
                     }
                 #MONSTER_1 , MONSTER_2, osv till MONSTER_{monstersAlive} kommer finnas i denna lista efter att de genererats
@@ -81,14 +81,14 @@ def generate_monsters():
     global maxMonstersAlive
     maxMonstersAlive = 3+(difficulty*level)
     diffSum = level*difficulty*2
-    # diffSum easy:   lvl 1 2 3 4 5 6 7 8 9 10 = 2  4  6  8 10 12 14 16 18 20
-    # diffSum medium: lvl 1 2 3 4 5 6 7 8 9 10 = 4  8 12 16 20 24 28 32 36 40
-    # diffSum hard:   lvl 1 2 3 4 5 6 7 8 9 10 = 6 12 18 24 30 36 42 48 54 60
+    # diffSum beginner:   lvl 1 2 3 4 5 6 7 8 9 10 = 2  4  6  8 10 12 14 16 18 20
+    # diffSum default: lvl 1 2 3 4 5 6 7 8 9 10 = 4  8 12 16 20 24 28 32 36 40
+    # diffSum ILTD:   lvl 1 2 3 4 5 6 7 8 9 10 = 6 12 18 24 30 36 42 48 54 60
     # en 2a 'kostar' 1 från diffsum, en 3a kostar 2.
     for _ in range(maxMonstersAlive):
-        # monster easy:   lvl 1 2 3 4 5 6 7 8 9 10 = 3+1  3+2  3+3  3+4  3+5  3+6  3+7  3+8  3+9  3+10 
-        # monster medium: lvl 1 2 3 4 5 6 7 8 9 10 = 3+2  3+4  3+6  3+8  3+10 3+12 3+14 3+16 3+18 3+20
-        # monster hard:   lvl 1 2 3 4 5 6 7 8 9 10 = 3+3  3+6  3+9  3+12 3+15 3+18 3+21 3+24 3+27 3+30
+        # monster beginner:   lvl 1 2 3 4 5 6 7 8 9 10 = 3+1  3+2  3+3  3+4  3+5  3+6  3+7  3+8  3+9  3+10 
+        # monster default: lvl 1 2 3 4 5 6 7 8 9 10 = 3+2  3+4  3+6  3+8  3+10 3+12 3+14 3+16 3+18 3+20
+        # monster ILTD:   lvl 1 2 3 4 5 6 7 8 9 10 = 3+3  3+6  3+9  3+12 3+15 3+18 3+21 3+24 3+27 3+30
         rDiff = randint(1, 3)
         rX = randint(2, SIDELENGTH-3)
         rY = randint(2, SIDELENGTH-3)
@@ -352,15 +352,15 @@ def droppedItems():
         keyDropped = True
         return GRAPHICS['KEY'] 
     elif level >= 5 and diceRoll >= 100+(difficulty*10)-(level*7):
-        #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 25 32 39 46 53 60 (easy),
-        #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 15 22 29 36 43 50 (medium),
-        #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 5  12 19 26 33 40 (hard),
+        #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 25 32 39 46 53 60 (beginner),
+        #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 15 22 29 36 43 50 (default),
+        #chans för pirog att droppa för lvl 5 6 7 8 9 10 = 5  12 19 26 33 40 (ILTD),
         pirogueDropped = True
         return GRAPHICS['PIROGUE']
     elif diceRoll >= (25*difficulty)+(level*4):
-        #chans för potion att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 71 67 63 59 55 51 47 43 39 35 (easy),
-        #chans för potion att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 46 42 38 34 30 26 22 18 14 10 (medium),
-        #chans för potion att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 21 17 13 9  5  1  0  0  0  0  (hard),
+        #chans för potion att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 71 67 63 59 55 51 47 43 39 35 (beginner),
+        #chans för potion att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 46 42 38 34 30 26 22 18 14 10 (default),
+        #chans för potion att droppa för lvl 1 2 3 4 5 6 7 8 9 10 = 21 17 13 9  5  1  0  0  0  0  (ILTD),
         return GRAPHICS['POTION']
     else:
         return GRAPHICS['EMPTY']
@@ -386,7 +386,7 @@ def entity_action(entity, where):
         return False
     elif entity == 'PLAYER' and goalTile == GRAPHICS['KEY']:
         keyFound = True
-        if entities[entity]['life'] < 2 and difficulty < 3: #om difficulty inte är hard så får man liv av nyckeln
+        if entities[entity]['life'] < 2 and difficulty < 3: #om difficulty inte är ILTD så får man liv av nyckeln
             entities[entity]['life'] += 1
             update_entity(entity,entities[entity]['pos'])
         move_entity(entity, where)
