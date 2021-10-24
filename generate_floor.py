@@ -380,7 +380,7 @@ def entity_action(entity, where):
     elif goalTile == GRAPHICS['V_DOOR'] or goalTile == GRAPHICS['H_DOOR']:
         change_room(where)
         return True
-    elif where == entities['PLAYER']['pos'] and not entity == 'PLAYER':
+    elif where == entities['PLAYER']['pos'] and entities['PLAYER']['life'] > 0:
         attack_entity(entity, 'PLAYER')
         return False
     elif entity == 'PLAYER' and goalTile == GRAPHICS['KEY']:
