@@ -90,11 +90,11 @@ def generate_monsters():
         # monster default:  lvl 1 2 3 4 5 6 7 8 9 10 = 3+2  3+4  3+6  3+8  3+10 3+12 3+14 3+16 3+18 3+20
         # monster ILTD:     lvl 1 2 3 4 5 6 7 8 9 10 = 3+3  3+6  3+9  3+12 3+15 3+18 3+21 3+24 3+27 3+30
         rDiff = randint(1, 3)
-        rX = randint(2, SIDELENGTH-3)
-        rY = randint(2, SIDELENGTH-3)
-        if (rX,rY) == (MIDDLE,MIDDLE): #SPECIALFALL om en fiende skulle renderas på samma ruta som spelaren spawnas på.
-            rX+=1 #Kanske hade varit ännu bättre att lägga till ett generellt fall så att det endast kan spawnas nya saker på 'EMPTY'-tiles.
-        rRoom = randint(0,(len(floor)-1))
+        rX,rY,rRoom = (0,0,0)
+        while floor[rRoom]['tiles'][rX][rY] != GRAPHICS['EMPTY']:
+            rX = randint(2, SIDELENGTH-3)
+            rY = randint(2, SIDELENGTH-3)
+            rRoom = randint(0,(len(floor)-1))
         diffSum -= (rDiff-1)
         if diffSum <= 0:
             rDiff = 1
@@ -178,6 +178,7 @@ def render_room(tiles):
         print("\n", end="")
     #print(floor[entities['PLAYER']['room']]['coordinates'])
     print(f"Floor: {level}")
+    print(f"Key found: {keyFound}")
     
     print(prompt)
     if prompt != "":
@@ -192,7 +193,7 @@ def render_room(tiles):
 def possible_placements(roomCoords):
     y, x = roomCoords
     possibilities = [((y+1), x), ((y-1), x), (y, (x-1)), (y, (x+1))]
-    return possibilities 
+    return possibilities
     
 def nearby_rooms(roomCoords, n): #returnerar en lista med alla rum som ligger max n steg från ett givet rums koordinater, anropas i generate_floor
     x,y = roomCoords
@@ -339,7 +340,7 @@ def next_floor():
     global monstersAlive
     level += 1
     monstersAlive = 0
-    floor = generate_floor()
+    generate_floor()
     generate_monsters()
     playerTurn()
 
