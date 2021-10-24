@@ -458,8 +458,6 @@ def change_room(coords):
         for room in floor:
             if room['coordinates'] == (roomX, roomY-1):
                 move_between_rooms(room, (MIDDLE, 1))
-    
-        
         
 #Anropas för att ge spelaren möjlighet att ge inputs för att göra sitt drag. 
 def playerTurn():
@@ -497,8 +495,6 @@ def playerTurn():
         render_room(floor[entities['PLAYER']['room']]['tiles']) # andra gången för att visa fiendens drag
         if game_over:
             break
-        
-        render_room(floor[entities['PLAYER']['room']]['tiles']) # tredje gången för att rensa prompten
         
     render_room(floor[entities['PLAYER']['room']]['tiles']) # när det blir gameover vill vi rensa prompten
     if not pirogueEaten:
@@ -545,7 +541,7 @@ def pathfinder(tiles, entity, target):
             return pos
         else:
             rPick = randint(0,1)
-            sideStep = (0,0)
+            sideStep = (0,0) #för att undvika error om if-satserna under inte skulle gå igenom
             if targetX == eX:
                 if rPick:
                     sideStep = direction['left']
@@ -703,99 +699,7 @@ def mainMenu():
                         print(MENUFRAMES[menuState])
             else:
                 inMainMenu = False
-    
-#Testfunktioner
-def testing_create_doors(door):
-    testroom = generate_room((0,0))
-    render_room(testroom)
-    testroom['doors'][door] = True
-    create_doors(testroom)
-    render_room(testroom)
-    
-def testing_movement():
-    generate_floor()
-    generate_monsters()
-    playerTurn()
-
-#Testar hur många matcher som vinns under de bästa förhållanden för spelarna, dvs hen hittar det monster med minst liv, dödar den och tar sig till nästa nivå omdelebart tills hen är död eller hittat pirogen.
-def testing_difficulty():
-    global level
-    global floor
-    global difficulty
-    global pirogueDropped
-    #global keyDropped
-    wins = 0
-    losses = 0
-    totalGames = input("How many games do you want to emulate?")
-    difficulty = int(input("What difficulty? (1-3)"))
-    for _ in range(int(totalGames)):
-        print(f"Game {_}")
-        level = 0
-        floor = []
-        gameOver = False
-        entities['PLAYER']['life'] = 2
-        pirogueDropped = False
-        keyDropped = False
-        while entities['PLAYER']['life'] > 0 or gameOver == False:
-            if entities['PLAYER']['life'] == 1 and difficulty != 3:
-                entities['PLAYER']['life'] = 2
-            level += 1
-            generate_floor()
-            generate_monsters()
-            keyDropped = False
-            print(f"Floor: {level}")
-          
-            
-            while keyDropped == False:
-                monster = ""
-                monsterFound = False
-                i = 0
-                while monsterFound == False:
-                    for e in entities:
-                        print(e)
-                        if entities[e]['life'] == 1+i and e != 'PLAYER':
-                            monster = e
-                    if monster != "":
-                        monsterFound = True
-                        print(f"Battle against {e}")
-                    else:
-                        i +=1
-                    
                 
-                    
-                while entities[monster]['life'] > 0 and entities['PLAYER']['life'] > 0:
-                    if entities['PLAYER']['life'] > 0:
-                        attack_entity('PLAYER', monster)
-                    if entities[monster]['life'] > 0:
-                        attack_entity(monster, 'PLAYER')
-                print("Battle is over!")
-                    
-                if entities['PLAYER']['life'] == 0:
-                    print("player died")
-                    gameOver = True
-                    losses +=1
-                    keyDropped = True #nyckeln har inte droppat men behöver bryta loopen
-                
-                elif pirogueDropped == True:
-                    print("player won")
-                    wins += 1
-                    gameOver = True
-                    keyDropped = True
-                    
-                
-                 
-                elif keyDropped == True:
-                    print("Key dropped!")
-                
-                
-                
-    print(f"Total games: {totalGames}")
-    print(f"Wins: {wins}")
-    print(f"Losses: {losses}")
-    savedata = open("difficulty_test_data.txt", 'a')
-    savedata.write(f"Total games: {totalGames}, Difficulty: {difficulty}, Wins: {wins}, Losses: {losses}\n")
-    savedata.close
-            
 def main():
     while 1:
         initGlobalVariables()

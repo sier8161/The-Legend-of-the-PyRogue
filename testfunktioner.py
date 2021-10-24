@@ -89,4 +89,3 @@ def testing_difficulty():
     savedata = open("difficulty_test_data.txt", 'a')
     savedata.write(f"Total games: {totalGames}, Difficulty: {difficulty}, Wins: {wins}, Losses: {losses}\n")
     savedata.close
-            
