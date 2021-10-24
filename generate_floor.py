@@ -49,7 +49,7 @@ def initGlobalVariables():
     entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
                     'room':0,  #OBS! Nyckel 'room' som en entitet har är ett index för listan floor där indexet motsvarar ett dictionary som är rummet i fråga
                     'life':2, #2: sköld, 1: ingen sköld, 0:död
-                    'evasion': 20, #sätts efter mainMenu till (4-difficulty)*10 (beginner = 30, normal = 20, ILTD = 10)
+                    'evasion': 20, #sätts efter mainMenu() till (4-difficulty)*20 (beginner = 60, normal = 40, ILTD = 20)
                     'name':'Player'
                     }
                 #MONSTER_1 , MONSTER_2, osv till MONSTER_{monstersAlive} kommer finnas i denna lista efter att de genererats
@@ -81,14 +81,14 @@ def generate_monsters():
     global maxMonstersAlive
     maxMonstersAlive = 3+(difficulty*level)
     diffSum = level*difficulty*2
-    # diffSum beginner:   lvl 1 2 3 4 5 6 7 8 9 10 = 2  4  6  8 10 12 14 16 18 20
-    # diffSum default: lvl 1 2 3 4 5 6 7 8 9 10 = 4  8 12 16 20 24 28 32 36 40
-    # diffSum ILTD:   lvl 1 2 3 4 5 6 7 8 9 10 = 6 12 18 24 30 36 42 48 54 60
+    # diffSum beginner: lvl 1 2 3 4 5 6 7 8 9 10 = 2  4  6  8 10 12 14 16 18 20
+    # diffSum default:  lvl 1 2 3 4 5 6 7 8 9 10 = 4  8 12 16 20 24 28 32 36 40
+    # diffSum ILTD:     lvl 1 2 3 4 5 6 7 8 9 10 = 6 12 18 24 30 36 42 48 54 60
     # en 2a 'kostar' 1 från diffsum, en 3a kostar 2.
     for _ in range(maxMonstersAlive):
-        # monster beginner:   lvl 1 2 3 4 5 6 7 8 9 10 = 3+1  3+2  3+3  3+4  3+5  3+6  3+7  3+8  3+9  3+10 
-        # monster default: lvl 1 2 3 4 5 6 7 8 9 10 = 3+2  3+4  3+6  3+8  3+10 3+12 3+14 3+16 3+18 3+20
-        # monster ILTD:   lvl 1 2 3 4 5 6 7 8 9 10 = 3+3  3+6  3+9  3+12 3+15 3+18 3+21 3+24 3+27 3+30
+        # monster beginner: lvl 1 2 3 4 5 6 7 8 9 10 = 3+1  3+2  3+3  3+4  3+5  3+6  3+7  3+8  3+9  3+10 
+        # monster default:  lvl 1 2 3 4 5 6 7 8 9 10 = 3+2  3+4  3+6  3+8  3+10 3+12 3+14 3+16 3+18 3+20
+        # monster ILTD:     lvl 1 2 3 4 5 6 7 8 9 10 = 3+3  3+6  3+9  3+12 3+15 3+18 3+21 3+24 3+27 3+30
         rDiff = randint(1, 3)
         rX = randint(2, SIDELENGTH-3)
         rY = randint(2, SIDELENGTH-3)
@@ -212,9 +212,9 @@ def generate_floor():
     existingRoomCoords= [(0,0)]
     possibilities = possible_placements((0,0)) #lista som lagrar alla möjliga koordinater där nästa rum kan placeras 
     nRooms = difficulty*(level-1) + 5 #Antalet rum bestäms av level och difficulty
-    # lvl 1 2 3 4 5 6 7 8 9 10 = 5  6  7  8  9  10 11 12 13 rum
-    # lvl 1 2 3 4 5 6 7 8 9 10 = 5  7  9  11 13 15 17 19 21 rum
-    # lvl 1 2 3 4 5 6 7 8 9 10 = 5  8  11 14 17 20 23 26 29 rum
+    # lvl 1 2 3 4 5 6 7 8 9 10 = 5  6  7  8  9  10 11 12 13 14 rum beginner
+    # lvl 1 2 3 4 5 6 7 8 9 10 = 5  7  9  11 13 15 17 19 21 23 rum default
+    # lvl 1 2 3 4 5 6 7 8 9 10 = 5  8  11 14 17 20 23 26 29 32 rum ILTD
     for _ in range(nRooms):
         rng = randint(0, len(possibilities)-1)
         newRoomCoords = possibilities[rng]
@@ -485,17 +485,26 @@ def playerTurn():
                 
             if keyboard.is_pressed('e'): #wait
                 playersTurn = False
-        
+                
+            if pirogueEaten or game_over:
+                break
+            
         render_room(floor[entities['PLAYER']['room']]['tiles']) # Första gången för att visa spelarens drag
-        if game_over:
+        if game_over or pirogueEaten:
             break
+        
         enemy_turn()
         render_room(floor[entities['PLAYER']['room']]['tiles']) # andra gången för att visa fiendens drag
         if game_over:
             break
-        render_room(floor[entities['PLAYER']['room']]['tiles']) # tredje gången för att få en tom prompt
+        
+        render_room(floor[entities['PLAYER']['room']]['tiles']) # tredje gången för att rensa prompten
+        
     render_room(floor[entities['PLAYER']['room']]['tiles']) # när det blir gameover vill vi rensa prompten
-    print("You died. Game over!\n")
+    if not pirogueEaten:
+        print("You died. Game over!\n")
+    else:
+        print("You found the pirogue!\nIt tasted like sweet victory.\n")
     print("Press e to go back to the main menu")
     keyboard.wait('e')
 
@@ -654,7 +663,7 @@ def mainMenu():
                             difficulty = 1
                         elif menuState == 4: #Default
                             difficulty = 2
-                        else:                #I like to die
+                        else:                #I Like To Die
                             difficulty = 3
                         menuState = 1
                         inDiffMenu = False
