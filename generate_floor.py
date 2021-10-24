@@ -231,16 +231,17 @@ def generate_floor():
     entities['PLAYER']['room'] = randint(0, nRooms) #slumpar vilket rum spelaren börjar i
     
     #Denna del av koden skapar en tile i ett rum som tar en till nästa floor och som är placerad successivt längre bort från spelaren desto fler floors den klarar
-    validRoomCoords =[]
-    allRoomCoords = []
-    i = 0
-    
-        
+    validRoomCoords =[]  
+    i = 0      
     while validRoomCoords == []: #Om inga rum är kvar på listan, anropa nearby_rooms igen med level-n
+        allRoomCoords = []
         for room in floor:   #Lägger till alla rums koordinater i en lista
             allRoomCoords.append(room['coordinates'])
-            
-        excludedRooms = nearby_rooms(floor[entities['PLAYER']['room']]['coordinates'], level-i) #nearby_rooms returnerar en lista med alla rum som är max n steg (inklusive diagonalt) från ursprungsrummet
+        
+        excludedRooms = []
+        for n in range(1, level+1-i):
+            for coords in  nearby_rooms(floor[entities['PLAYER']['room']]['coordinates'], n):
+                excludedRooms.append(coords) #nearby_rooms returnerar en lista med alla rum som är max n steg (inklusive diagonalt) från ursprungsrummet
                
         for roomCoords in excludedRooms: #Tar bort alla rum som är exkluderade från listan med alla rums koordinater
             if roomCoords in allRoomCoords:
