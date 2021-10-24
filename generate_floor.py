@@ -601,59 +601,53 @@ def animatedSplashScreen():
     print('Press e to start')
     keyboard.wait('e')
     
+def clearPrint(menuState):
+    clear_console()
+    print(MENUFRAMES[menuState])
+    
 def mainMenu():
     global difficulty
     inMainMenu = True
     inDiffMenu = False
     menuState = 2
-    clear_console()
-    print(MENUFRAMES[menuState])
+    clearPrint(menuState)
     while inMainMenu:
         sleep(0.1)
         if keyboard.is_pressed('w'):
             if menuState > 0:
                 menuState -= 1
-                clear_console()
-                print(MENUFRAMES[menuState])
+                clearPrint(menuState)
             else:
                 menuState = 2
-                clear_console()
-                print(MENUFRAMES[menuState])
+                clearPrint(menuState)
         if keyboard.is_pressed('s'):
             if menuState < 2:
                 menuState += 1
-                clear_console()
-                print(MENUFRAMES[menuState])
+                clearPrint(menuState)
             else:
                 menuState = 0
-                clear_console()
-                print(MENUFRAMES[menuState])
+                clearPrint(menuState)
         if keyboard.is_pressed('e'):
             if menuState == 1:
                 inDiffMenu = True
                 menuState = 2+difficulty
-                clear_console()
-                print(MENUFRAMES[menuState])
+                clearPrint(menuState)
                 while inDiffMenu:
                     sleep(0.1)
                     if keyboard.is_pressed('w'):
                         if menuState > 3:
                             menuState -= 1
-                            clear_console()
-                            print(MENUFRAMES[menuState])
+                            clearPrint(menuState)
                         else:
                             menuState = 5
-                            clear_console()
-                            print(MENUFRAMES[menuState])
+                            clearPrint(menuState)
                     if keyboard.is_pressed('s'):
                         if menuState < 5:
                             menuState += 1
-                            clear_console()
-                            print(MENUFRAMES[menuState])
+                            clearPrint(menuState)
                         else:
                             menuState = 3
-                            clear_console()
-                            print(MENUFRAMES[menuState])
+                            clearPrint(menuState)
                     if keyboard.is_pressed('e'):
                         if menuState == 3:   #Beginner
                             difficulty = 1
@@ -663,51 +657,41 @@ def mainMenu():
                             difficulty = 3
                         menuState = 1
                         inDiffMenu = False
-                        clear_console()
-                        print(MENUFRAMES[menuState])
+                        clearPrint(menuState)
             elif menuState == 2:
                 inHelp = True
                 menuState = 6
-                clear_console()
-                print(MENUFRAMES[menuState])
+                clearPrint(menuState)
                 while inHelp:
                     sleep(0.1)
                     if keyboard.is_pressed('d'):
                         if menuState < 8:
                             menuState += 1
-                            clear_console()
-                            print(MENUFRAMES[menuState])
+                            clearPrint(menuState)
                         else:
                             menuState = 6
-                            clear_console()
-                            print(MENUFRAMES[menuState])
+                            clearPrint(menuState)
                             
                     if keyboard.is_pressed('a'):
                         if menuState > 6:
                             menuState -= 1
-                            clear_console()
-                            print(MENUFRAMES[menuState])
+                            clearPrint(menuState)
                         else:
                             menuState = 8
-                            clear_console()
-                            print(MENUFRAMES[menuState])
+                            clearPrint(menuState)
                             
                     if keyboard.is_pressed('e'):
                         menuState = 1
                         inHelp = False
-                        clear_console()
-                        print(MENUFRAMES[menuState])
+                        clearPrint(menuState)
             else:
                 inMainMenu = False
                 
 def main():
     while 1:
         initGlobalVariables()
-        #animatedSplashScreen()
+        animatedSplashScreen()
         mainMenu()
         entities['PLAYER']['evasion']= 20*(4-difficulty)
-        next_floor()
-        
+        next_floor()     
 main()
-
-#testing_difficulty()
