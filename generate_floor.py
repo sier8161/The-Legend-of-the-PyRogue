@@ -487,9 +487,14 @@ def playerTurn():
                 playersTurn = False
         
         render_room(floor[entities['PLAYER']['room']]['tiles']) # Första gången för att visa spelarens drag
+        if game_over:
+            break
         enemy_turn()
         render_room(floor[entities['PLAYER']['room']]['tiles']) # andra gången för att visa fiendens drag
-        # render_room(floor[entities['PLAYER']['room']]['tiles']) # tredje gången för att få en tom prompt
+        if game_over:
+            break
+        render_room(floor[entities['PLAYER']['room']]['tiles']) # tredje gången för att få en tom prompt
+    render_room(floor[entities['PLAYER']['room']]['tiles']) # när det blir gameover vill vi rensa prompten
     print("You died. Game over!\n")
     print("Press e to go back to the main menu")
     keyboard.wait('e')
@@ -703,7 +708,6 @@ def testing_movement():
     generate_monsters()
     playerTurn()
 
-
 #Testar hur många matcher som vinns under de bästa förhållanden för spelarna, dvs hen hittar det monster med minst liv, dödar den och tar sig till nästa nivå omdelebart tills hen är död eller hittat pirogen.
 def testing_difficulty():
     global level
@@ -782,19 +786,7 @@ def testing_difficulty():
     savedata = open("difficulty_test_data.txt", 'a')
     savedata.write(f"Total games: {totalGames}, Difficulty: {difficulty}, Wins: {wins}, Losses: {losses}\n")
     savedata.close
-                
-                
-                
             
-def next_floor():
-    global level
-    level += 1
-    floor = generate_floor()
-    generate_monsters()
-    playerTurn()
-            
-            
-
 def main():
     while 1:
         initGlobalVariables()
@@ -802,7 +794,7 @@ def main():
         mainMenu()
         entities['PLAYER']['evasion']= 20*(4-difficulty)
         next_floor()
-    
+        
 main()
 
 #testing_difficulty()
