@@ -184,7 +184,7 @@ press E to exit
 1 = 1hp monster
 2 = 2hp monster
 3 = 3hp monster
-z = sleepy 123
+
 @ = player
 a = dmgd player
 ∩ = dead player
