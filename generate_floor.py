@@ -33,7 +33,7 @@ GRAPHICS={  'PLAYER':'@',
 
 def initGlobalVariables():
     global game_over, keyDropped, keyFound, pirogueDropped, pirogueEaten, prompt
-    global floor, level, monstersAlive, maxMonstersAlive, difficulty, entities
+    global floor, level, monstersAlive, maxMonstersAlive, difficulty, entities, monstersKilled
     game_over = False
     keyDropped = False
     keyFound = False
@@ -44,6 +44,7 @@ def initGlobalVariables():
     level = 0
     monstersAlive = 0
     maxMonstersAlive = 0
+    monstersKilled = 0
     difficulty = 2
     
     entities = {'PLAYER':{'pos':(MIDDLE, MIDDLE),
@@ -177,8 +178,12 @@ def render_room(tiles):
             print(tile, end="")
         print("\n", end="")
     #print(floor[entities['PLAYER']['room']]['coordinates'])
-    print(f"Floor: {level}")
-    print(f"Key found: {keyFound}")
+    if keyFound:
+        key = '╖'
+    else:
+        key = ''    
+    print(f"Floor: {level} {key}")
+    print(f'Kills: {monstersKilled}')
     
     print(prompt)
     if prompt != "":
@@ -284,8 +289,9 @@ def place_entity(entity, where):
         if monsterLife > 0:
             graphics = GRAPHICS[f'ENEMY_{monsterLife}']
         else:
-            global monstersAlive
+            global monstersAlive, monstersKilled
             monstersAlive -= 1
+            monstersKilled += 1
             graphics = droppedItems()
             del entities[entity]
         
@@ -488,13 +494,10 @@ def playerTurn():
             if pirogueEaten or game_over:
                 break
             
-        render_room(floor[entities['PLAYER']['room']]['tiles']) # Första gången för att visa spelarens drag
-        if game_over or pirogueEaten:
-            break
-        
         enemy_turn()
         render_room(floor[entities['PLAYER']['room']]['tiles']) # andra gången för att visa fiendens drag
-        if game_over:
+        sleep(0.08)
+        if game_over or pirogueEaten:
             break
         
     render_room(floor[entities['PLAYER']['room']]['tiles']) # när det blir gameover vill vi rensa prompten
