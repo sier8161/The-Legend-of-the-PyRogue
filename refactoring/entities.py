@@ -1,30 +1,23 @@
 from random import randint
-
+#Global variables
 difficulty = 1
 
 prompts = []
 
-GRAPHICS={  'PLAYER':'@',
-            'PLAYER_DAMAGED':'a',
-            'PLAYER_DEAD':'∩',
-            'TL_WALL':'╔', #TL står för top-left
-            'TR_WALL':'╗', #TR står för top-right
-            'BL_WALL':'╚', #BL står för bottom-left
-            'BR_WALL':'╝', #BR står för bottom-right
-            'V_WALL':'║',  #V står för vertical
-            'H_WALL':'═',  #H står för horizontal
-            'H_DOOR': '─',
-            'V_DOOR': '│',
-            'EMPTY':' ',
-            'NEXT_FLOOR':'^',
-            'ENEMY_1':'1',
-            'ENEMY_2':'2',
-            'ENEMY_3':'3',
-            'ENEMY_SLEEPING':'z',
-            'POTION':'H',
-            'PIROGUE':'B',
-            'KEY':'╖',}
-
+GRAPHICS = {
+    'Player':{
+        '2':'@',
+        '1':'a',
+        '0':'∩',
+        'ERROR': '?'
+    },
+    'Monster':{
+        '3':'3',
+        '2':'2',
+        '1':'1',
+        'ERROR': '?'
+    }
+}
 class EmptyTile():
     graphics = ' '
 
@@ -39,19 +32,33 @@ class Pyrogue(Item):
     graphics = 'B'
 
 class Entity():
-    name = ""
-    def __init__(self, pos, room, life, evasion):
+    
+    def __init__(self, pos, room, life):
         self.pos = pos
         self.room = room
         self.life = life
-        self.evasion = evasion
-    
+        self.evasion = 5 * difficulty 
+        self.graphics = GRAPHICS[self.__class__.__name__]
+        self.set_graphic_corresponding_life()
+
+    def set_graphic_corresponding_life(self):
+        life_str = str(self.life)
+        self.graphic = self.graphics[life_str]
+
     def move(self, where):
         pass
     
     def death_prompt(self):
         n = self.name
         prompts.append(n + " died!")
+
+    def successful_attack_prompt(self, defender):
+        n = self.name
+        prompts.append(n + " successfully hit " + defender.name + " dealing damage!")
+    
+    def missed_attack_prompt(self, defender):
+        n = self.name
+        prompts.append(n + " tries to attack " + defender.name + " but misses!")
         
     def kill(self):
         self.death_prompt()
@@ -67,49 +74,22 @@ class Entity():
         hit_roll = randint(0,100)
         hit_successful = (hit_roll - defender.evasion) >= 15 * difficulty
         if hit_successful:
+            self.successful_attack_prompt(defender)
             defender.take_damage(1)
+            defender.set_graphic_corresponding_life()
+        else:
+            self.missed_attack_prompt(defender)
 
 
 class Player(Entity):
     name = 'Player'
-    #def __init__(self):
-    #    self.set_graphics_corresponding_life(self)
-    
-    possible_graphics = {
-        'PLAYER':'@',
-        'PLAYER_DAMAGED':'a',
-        'PLAYER_DEAD':'∩',
-        'ERROR': '?'
-    } 
 
-    def set_graphics_corresponding_life(self):
-        l = self.life
-        g = self.possible_graphics
-        if l == 2:
-            self.graphics = g['PLAYER']
-        elif l == 1:
-            self.graphics = g['PLAYER_DAMAGED']
-        elif l == 0:
-            self.graphics = g['PLAYER_DEAD']
-        else:
-            self.graphics = g['ERROR']
+    
+    
+
+
     
 class Monster(Entity):
     name = 'Monster'
-    #def __init__(self):
-    #    self.set_graphics_corresponding_life(self)
-    
-    possible_graphics = {
-        '3_HP':'3',
-        '2_HP':'2',
-        '1_HP':'1',
-        'ERROR': '?'
-    } 
 
-    def set_graphics_corresponding_life(self):
-        l = self.life
-        g = self.possible_graphics
-        if 0 <= l and l <= 3:
-            self.graphics = g[l + '_HP']
-        else:
-            self.graphics = g['ERROR']
+
